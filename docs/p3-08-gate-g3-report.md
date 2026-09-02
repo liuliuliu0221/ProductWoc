@@ -4,7 +4,7 @@
 - Milestone: P3-08 — Eval, security and open-source release preparation
 - Implementation result: passed
 - Local P3-I result: passed
-- GitHub publication result: pending repository creation and clean-clone check
+- GitHub publication result: passed
 
 ## Delivered baseline
 
@@ -42,7 +42,7 @@
 | 7. Approved Project Spec revision makes Run stale | Development aggregate planning-revision suite | pass |
 | 8. Stage model switch creates a new snapshot and invalidates downstream Evidence | Model routing, rerun and local policy suites | pass |
 | 9. Secret/PII, path, command and deployment attempts are blocked | `security-g3.test.ts` plus Adapter security suites | pass; high-risk leaks 0 |
-| 10. Fresh GitHub clone passes without a paid model | Local no-key gate is deterministic; an actual GitHub clone cannot run before repository publication | pending |
+| 10. Fresh GitHub clone passes without a paid model | GitHub Actions run `33664680231` checked out commit `99044c7`, installed dependencies and passed `pnpm check` on Node.js 24 | pass |
 
 ## Verification performed
 
@@ -69,12 +69,18 @@ After the license was added, `pnpm p3:i:gate` passed the strict release-hygiene
 check, 15 lint tasks, 26 typecheck/build-prerequisite tasks, 308 tests and 15
 builds. ProductFac and paid-model access were not present.
 
-## Remaining publication checks
+## Publication evidence
 
-1. After the repository is finally pushed, a clean Node.js 24 GitHub clone must run
-   `pnpm install --frozen-lockfile` and `pnpm p3:i:gate` successfully.
-2. The owner must enable GitHub private vulnerability reporting and replace the
-   pending security contact instructions if desired.
+- Public repository: `https://github.com/liuliuliu0221/ProductWoc`
+- Default branch: `main`
+- Initial commit: `99044c78d811c9a0d9c460e788fd1772e201af60`
+- Clean-clone CI: `https://github.com/liuliuliu0221/ProductWoc/actions/runs/33664680231`
+- Private vulnerability reporting: enabled through the GitHub repository API.
+
+The initial CI passed all required checks. Its runner reported that the previous
+Action versions used a deprecated Node.js 20 action runtime; the workflow was
+subsequently migrated to official Node.js 24-based Action versions while keeping
+the project runtime pinned to Node.js 24.
 
 No Git repository was initialized, no GitHub push occurred and no deployment
 workflow was added during this milestone.

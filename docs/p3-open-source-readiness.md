@@ -17,8 +17,8 @@
 - [x] Known limitations and a credential-reference-only model example are ready.
 - [x] Fourteen pinned repository fixtures cover all twelve required Eval categories.
 - [x] Gate G3 security regressions block path, command, credential and deployment risks.
-- [ ] GitHub private vulnerability reporting is enabled.
-- [ ] A clean GitHub clone has passed `pnpm p3:i:gate` on Node.js 24.
+- [x] GitHub private vulnerability reporting is enabled.
+- [x] A clean GitHub clone passed `pnpm check` on Node.js 24.
 
 ## License decision
 

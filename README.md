@@ -1,5 +1,7 @@
 # ProductWoc
 
+[GitHub repository](https://github.com/liuliuliu0221/ProductWoc) · MIT licensed
+
 ProductWoc is a standalone planning application and reusable planning kernel. It
 turns an idea into immutable Project Spec, Technical Design, Execution Plan, and
 DevelopmentStartEnvelope versions without requiring ProductFac, a database,
@@ -144,3 +146,4 @@ original stage 2 integration direction conflicts with them, ADR 008 and the stag
 - `docs/p3-06-gate-p3-g-report.md`
 - `docs/p3-07-gate-p3-h-report.md`
 - `docs/p3-08-gate-g3-report.md`
+- `docs/github-publication-report.md`
