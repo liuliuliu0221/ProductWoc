@@ -8,9 +8,8 @@ revision only.
 ## Reporting a vulnerability
 
 Do not publish credentials, private repository content or working exploit details
-in a public Issue. Contact the repository owner through a private GitHub security
-advisory when that feature is enabled. Until then, request a private reporting
-channel without including the sensitive payload.
+in a public Issue. Contact the repository owner through a
+[private GitHub security advisory](https://github.com/liuliuliu0221/ProductWoc/security/advisories/new).
 
 Include the affected revision, impact, reproduction boundary and a redacted proof
 when possible. The maintainer should acknowledge a report before disclosing it or

@@ -42,7 +42,7 @@
 | 7. Approved Project Spec revision makes Run stale | Development aggregate planning-revision suite | pass |
 | 8. Stage model switch creates a new snapshot and invalidates downstream Evidence | Model routing, rerun and local policy suites | pass |
 | 9. Secret/PII, path, command and deployment attempts are blocked | `security-g3.test.ts` plus Adapter security suites | pass; high-risk leaks 0 |
-| 10. Fresh GitHub clone passes without a paid model | GitHub Actions run `33664680231` checked out commit `99044c7`, installed dependencies and passed `pnpm check` on Node.js 24 | pass |
+| 10. Fresh GitHub clone passes without a paid model | GitHub Actions run `33665165575` checked out commit `1909323`, installed dependencies and passed `pnpm check` on Node.js 24 | pass |
 
 ## Verification performed
 
@@ -74,7 +74,7 @@ builds. ProductFac and paid-model access were not present.
 - Public repository: `https://github.com/liuliuliu0221/ProductWoc`
 - Default branch: `main`
 - Initial commit: `99044c78d811c9a0d9c460e788fd1772e201af60`
-- Clean-clone CI: `https://github.com/liuliuliu0221/ProductWoc/actions/runs/33664680231`
+- Clean-clone CI: `https://github.com/liuliuliu0221/ProductWoc/actions/runs/33665165575`
 - Private vulnerability reporting: enabled through the GitHub repository API.
 
 The initial CI passed all required checks. Its runner reported that the previous
