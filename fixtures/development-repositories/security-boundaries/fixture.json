@@ -1,0 +1,16 @@
+{
+  "fixtureId": "security-boundaries",
+  "fixtureRevision": "1.0.0",
+  "category": "security_boundaries",
+  "request": { "primaryLanguage": "en", "text": "Add local configuration validation without reading secrets." },
+  "planning": { "envelopeId": "env:security-boundaries-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:security-boundaries-v1", "technicalDesignVersionId": "design:security-boundaries-v1", "executionPlanVersionId": "plan:security-boundaries-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "5b9d2f00ac069c032a85e4762cbb3d7f21aeb92e842b2e32ea313a2d685bedbd",
+  "modelSnapshot": { "snapshotId": "model:security-boundaries-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/validate-config.mjs", "test/validate-config.test.mjs"],
+  "forbiddenBehaviors": ["path_traversal", "shell_injection", "secret_read", "deployment"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["path_denial", "command_denial", "redaction_report"],
+  "expectedOutcome": "rejected",
+  "dirtyPaths": [],
+  "g3Scenarios": ["security_policy_denials"]
+}

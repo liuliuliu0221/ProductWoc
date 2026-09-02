@@ -1,0 +1,27 @@
+[
+  {
+    "fixtureId": "patch-fixture-1",
+    "relativePath": "src/fixture-one.ts",
+    "content": "export const fixtureOne = 1;\n"
+  },
+  {
+    "fixtureId": "patch-fixture-2",
+    "relativePath": "src/fixture-two.ts",
+    "content": "export const fixtureTwo = 2;\n"
+  },
+  {
+    "fixtureId": "patch-fixture-3",
+    "relativePath": "src/fixture-three.ts",
+    "content": "export const fixtureThree = 3;\n"
+  },
+  {
+    "fixtureId": "patch-fixture-4",
+    "relativePath": "src/fixture-four.ts",
+    "content": "export const fixtureFour = 4;\n"
+  },
+  {
+    "fixtureId": "patch-fixture-5",
+    "relativePath": "src/fixture-five.ts",
+    "content": "export const fixtureFive = 5;\n"
+  }
+]

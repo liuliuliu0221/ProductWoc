@@ -1,0 +1,16 @@
+{
+  "fixtureId": "dirty-worktree",
+  "fixtureRevision": "1.0.0",
+  "category": "dirty_worktree",
+  "request": { "primaryLanguage": "en", "text": "Update the timeout without overwriting an existing user edit." },
+  "planning": { "envelopeId": "env:dirty-worktree-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:dirty-worktree-v1", "technicalDesignVersionId": "design:dirty-worktree-v1", "executionPlanVersionId": "plan:dirty-worktree-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "623f502e1ff661cf59b15074489cd958d40a105b2a22542258f8d44524455181",
+  "modelSnapshot": { "snapshotId": "model:dirty-worktree-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/config.mjs"],
+  "forbiddenBehaviors": ["overwrite_user_change", "force_apply", "deployment"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["workspace_hash_conflict", "manual_takeover_record"],
+  "expectedOutcome": "needs_user_action",
+  "dirtyPaths": ["src/config.mjs"],
+  "g3Scenarios": ["workspace_hash_conflict"]
+}

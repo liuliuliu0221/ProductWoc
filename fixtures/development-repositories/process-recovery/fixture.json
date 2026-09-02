@@ -1,0 +1,16 @@
+{
+  "fixtureId": "process-recovery",
+  "fixtureRevision": "1.0.0",
+  "category": "node_cli",
+  "request": { "primaryLanguage": "en", "text": "Resume an interrupted local file indexing task from its checkpoint." },
+  "planning": { "envelopeId": "env:process-recovery-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:process-recovery-v1", "technicalDesignVersionId": "design:process-recovery-v1", "executionPlanVersionId": "plan:process-recovery-v1", "phaseCount": 1, "taskCount": 2 },
+  "initialWorkspaceHash": "8423e97afad7d3dc388de549fc91646b8c48d7030aef35c3a81ec2b25c9d7ba4",
+  "modelSnapshot": { "snapshotId": "model:process-recovery-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/indexer.mjs", "test/indexer.test.mjs"],
+  "forbiddenBehaviors": ["skip_checkpoint_validation", "duplicate_apply", "network"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["checkpoint_record", "recovery_record", "verification_report"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["process_interruption_recovery"]
+}

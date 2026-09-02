@@ -1,0 +1,16 @@
+{
+  "fixtureId": "migration-simulation",
+  "fixtureRevision": "1.0.0",
+  "category": "migration_simulation",
+  "request": { "primaryLanguage": "en", "text": "Simulate a versioned record migration without a database connection." },
+  "planning": { "envelopeId": "env:migration-simulation-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:migration-simulation-v1", "technicalDesignVersionId": "design:migration-simulation-v1", "executionPlanVersionId": "plan:migration-simulation-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "7598cd9fd921d79b06011ac2f8b17db5250f0af8a84329d5c2483aba1c65737f",
+  "modelSnapshot": { "snapshotId": "model:migration-simulation-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/migrate.mjs", "test/migrate.test.mjs"],
+  "forbiddenBehaviors": ["database_connection", "network", "destructive_write"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["patch_journal", "migration_fixture_report", "requirement_trace"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["five_execution_plans"]
+}

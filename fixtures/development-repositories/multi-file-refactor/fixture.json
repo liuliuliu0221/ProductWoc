@@ -1,0 +1,16 @@
+{
+  "fixtureId": "multi-file-refactor",
+  "fixtureRevision": "1.0.0",
+  "category": "multi_file_refactor",
+  "request": { "primaryLanguage": "en", "text": "Refactor user naming across the domain and service layers." },
+  "planning": { "envelopeId": "env:multi-file-refactor-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:multi-file-refactor-v1", "technicalDesignVersionId": "design:multi-file-refactor-v1", "executionPlanVersionId": "plan:multi-file-refactor-v1", "phaseCount": 2, "taskCount": 3 },
+  "initialWorkspaceHash": "0bb386b5eba94518ef7be4c06a8cdd20d6f487703793de6f0ac6ab63a6d94158",
+  "modelSnapshot": { "snapshotId": "model:multi-file-refactor-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/user.ts", "src/user-service.ts", "src/index.ts", "test/user.test.ts"],
+  "forbiddenBehaviors": ["unrelated_file_change", "network", "deployment"],
+  "verificationCommands": ["pnpm test", "pnpm typecheck"],
+  "expectedEvidence": ["patch_journal", "test_report", "typecheck_report", "requirement_trace"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["two_phase_three_task_closure", "task_patch_verification_traceability"]
+}

@@ -1,0 +1,16 @@
+{
+  "fixtureId": "static-web-ui",
+  "fixtureRevision": "1.0.0",
+  "category": "static_web_ui",
+  "request": { "primaryLanguage": "en", "text": "Add an accessible empty state to the static page." },
+  "planning": { "envelopeId": "env:static-web-ui-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:static-web-ui-v1", "technicalDesignVersionId": "design:static-web-ui-v1", "executionPlanVersionId": "plan:static-web-ui-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "30aa1c42793259758c1b3f405d817f4a49d3c4277f992b64acad7d3cc1639779",
+  "modelSnapshot": { "snapshotId": "model:static-web-ui-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["index.html", "styles.css"],
+  "forbiddenBehaviors": ["remote_asset", "deployment", "tracking_script"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["patch_journal", "accessibility_check", "requirement_trace"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["five_execution_plans"]
+}

@@ -1,0 +1,16 @@
+{
+  "fixtureId": "cross-platform-paths",
+  "fixtureRevision": "1.0.0",
+  "category": "typescript_library",
+  "request": { "primaryLanguage": "en", "text": "Normalize fixture-relative paths consistently across supported platforms." },
+  "planning": { "envelopeId": "env:cross-platform-paths-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:cross-platform-paths-v1", "technicalDesignVersionId": "design:cross-platform-paths-v1", "executionPlanVersionId": "plan:cross-platform-paths-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "2d6f57d84fa4b08b5e01e62710aa7ce9256386e3e3466ef9742a77de737f785c",
+  "modelSnapshot": { "snapshotId": "model:cross-platform-paths-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/path.ts", "test/path.test.ts"],
+  "forbiddenBehaviors": ["absolute_personal_path", "path_traversal", "platform_lock_in"],
+  "verificationCommands": ["pnpm test"],
+  "expectedEvidence": ["platform_matrix", "path_policy_report", "test_report"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["clean_clone_offline_gate"]
+}

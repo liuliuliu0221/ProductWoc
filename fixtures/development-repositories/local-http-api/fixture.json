@@ -1,0 +1,16 @@
+{
+  "fixtureId": "local-http-api",
+  "fixtureRevision": "1.0.0",
+  "category": "local_http_api",
+  "request": { "primaryLanguage": "en", "text": "Add a local-only health response with a version field." },
+  "planning": { "envelopeId": "env:local-http-api-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:local-http-api-v1", "technicalDesignVersionId": "design:local-http-api-v1", "executionPlanVersionId": "plan:local-http-api-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "2908ed20b2f81b469ad9cafa01b81dc7ed6da360d61ac87bdaa65671cc1f6c7c",
+  "modelSnapshot": { "snapshotId": "model:local-http-api-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/server.mjs", "test/server.test.mjs"],
+  "forbiddenBehaviors": ["external_network", "deployment", "production_write"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["patch_journal", "http_test_report", "requirement_trace"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["five_execution_plans"]
+}

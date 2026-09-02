@@ -1,0 +1,22 @@
+{
+  "evidenceTypes": [
+    "test_report",
+    "typecheck_report",
+    "lint_report",
+    "build_report",
+    "file_hash_manifest",
+    "structured_diff",
+    "runtime_log",
+    "manual_confirmation",
+    "rollback_report",
+    "screenshot",
+    "security_report"
+  ],
+  "failureCategories": [
+    "verification_failed",
+    "command_not_found",
+    "timeout",
+    "policy_denied",
+    "infrastructure_failure"
+  ]
+}

@@ -1,0 +1,45 @@
+[
+  {
+    "platform": "posix",
+    "input": "/system/config.txt",
+    "allowed": false,
+    "reason": "absolute_path"
+  },
+  {
+    "platform": "linux",
+    "input": "../../system/config.txt",
+    "allowed": false,
+    "reason": "path_traversal"
+  },
+  {
+    "platform": "macos",
+    "input": "config/.ENV.LOCAL",
+    "allowed": false,
+    "reason": "sensitive_path"
+  },
+  {
+    "platform": "windows",
+    "input": "C:\\workspace\\repo\\file.txt",
+    "allowed": false,
+    "reason": "absolute_path"
+  },
+  {
+    "platform": "windows",
+    "input": "\\\\server\\share\\file.txt",
+    "allowed": false,
+    "reason": "absolute_path"
+  },
+  {
+    "platform": "windows",
+    "input": "src\\domain\\index.ts",
+    "allowed": true,
+    "reason": "allowed",
+    "normalizedRelativePath": "src/domain/index.ts"
+  },
+  {
+    "platform": "portable",
+    "input": "src/node_modules/pkg/index.js",
+    "allowed": false,
+    "reason": "ignored_path"
+  }
+]

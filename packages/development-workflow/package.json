@@ -1,0 +1,20 @@
+{
+  "name": "@product-woc/development-workflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@product-woc/development-adapters": "workspace:*",
+    "@product-woc/development-agent": "workspace:*",
+    "@product-woc/development-contracts": "workspace:*",
+    "@product-woc/development-domain": "workspace:*",
+    "@product-woc/planning-contracts": "workspace:*"
+  }
+}

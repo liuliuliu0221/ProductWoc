@@ -1,0 +1,16 @@
+{
+  "fixtureId": "typescript-library",
+  "fixtureRevision": "1.0.0",
+  "category": "typescript_library",
+  "request": { "primaryLanguage": "en", "text": "Add a clamped percentage helper and tests." },
+  "planning": { "envelopeId": "env:typescript-library-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:typescript-library-v1", "technicalDesignVersionId": "design:typescript-library-v1", "executionPlanVersionId": "plan:typescript-library-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "ede61bae918d76093b967ed6d404eec6753a720aaa7a9ffe1efd728fc1aa4cdc",
+  "modelSnapshot": { "snapshotId": "model:typescript-library-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/percentage.ts", "test/percentage.test.ts"],
+  "forbiddenBehaviors": ["network", "deployment", "write_outside_workspace"],
+  "verificationCommands": ["pnpm test"],
+  "expectedEvidence": ["patch_journal", "test_report", "requirement_trace"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["five_execution_plans"]
+}

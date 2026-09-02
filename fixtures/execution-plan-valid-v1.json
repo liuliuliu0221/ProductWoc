@@ -1,0 +1,71 @@
+{
+  "summary": "Deliver the primary workflow in two verified phases.",
+  "phases": [
+    {
+      "id": "phase-foundation",
+      "title": "Foundation",
+      "objective": "Establish contracts, persistence boundaries, and test infrastructure.",
+      "dependsOnPhaseIds": [],
+      "taskIds": ["task-foundation"],
+      "verificationStrategy": ["Run typecheck, lint, and unit tests"],
+      "evidenceTypes": ["typecheck", "lint_report", "test_report"],
+      "exitCriteria": ["Core contracts and tests pass"]
+    },
+    {
+      "id": "phase-primary-workflow",
+      "title": "Primary workflow",
+      "objective": "Implement and verify the user-facing primary workflow.",
+      "dependsOnPhaseIds": ["phase-foundation"],
+      "taskIds": ["task-primary-workflow"],
+      "verificationStrategy": ["Run integration and acceptance tests"],
+      "evidenceTypes": ["test_report", "screenshot"],
+      "exitCriteria": ["The acceptance criterion is demonstrated"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-foundation",
+      "phaseId": "phase-foundation",
+      "title": "Implement the primary data and domain foundation",
+      "description": "Create the validated domain and persistence interfaces required by the workflow.",
+      "dependsOn": [],
+      "inputs": ["Approved Project Spec", "Approved Technical Design"],
+      "outputs": ["Validated domain module and repository interfaces"],
+      "requirementIds": ["REQ-1"],
+      "acceptanceCriterionIds": ["AC-1"],
+      "designItemIds": ["DES-1"],
+      "completionCriteria": ["Domain tests pass"],
+      "verificationSteps": [
+        { "id": "verify-foundation-tests", "description": "Run domain unit tests", "evidenceType": "test_report", "required": true }
+      ],
+      "repairStrategy": "Fix the failing contract or domain behavior and rerun the affected test before continuing.",
+      "rollbackStrategy": "Revert the additive domain module before integration.",
+      "riskLevel": "low"
+    },
+    {
+      "id": "task-primary-workflow",
+      "phaseId": "phase-primary-workflow",
+      "title": "Implement the primary workflow",
+      "description": "Build the authenticated workflow and verify the accepted behavior.",
+      "dependsOn": ["task-foundation"],
+      "inputs": ["Validated domain module", "Approved interaction scope"],
+      "outputs": ["Working primary workflow"],
+      "requirementIds": ["REQ-1"],
+      "acceptanceCriterionIds": ["AC-1"],
+      "designItemIds": ["DES-1"],
+      "completionCriteria": ["The primary workflow passes its acceptance test"],
+      "verificationSteps": [
+        { "id": "verify-primary-acceptance", "description": "Run the primary acceptance scenario", "evidenceType": "test_report", "required": true },
+        { "id": "verify-primary-ui", "description": "Capture the completed workflow", "evidenceType": "screenshot", "required": true }
+      ],
+      "repairStrategy": "Repair the smallest failing workflow boundary and repeat both acceptance checks.",
+      "rollbackStrategy": "Disable the feature entry point and retain additive data.",
+      "riskLevel": "medium"
+    }
+  ],
+  "coverageWaivers": [],
+  "userGates": [],
+  "globalVerificationStrategy": ["Run lint, typecheck, unit tests, integration tests, and build"],
+  "rollbackStrategy": "Disable the feature and roll back additive integration points without deleting user data.",
+  "risks": ["Durable production adapters remain outside the standalone runtime"]
+}

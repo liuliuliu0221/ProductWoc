@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a reproducible ProductWoc defect without sensitive data.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, private repository content or exploit details.
+  - type: input
+    id: version
+    attributes:
+      label: ProductWoc revision
+      placeholder: commit or release
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide a minimal redacted reproduction and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Redacted evidence
+      description: Include relevant local Gate output with paths and secrets removed.

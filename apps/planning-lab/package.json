@@ -1,0 +1,21 @@
+{
+  "name": "@product-woc/planning-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "standalone": "node dist/cli.js",
+    "standalone:durable": "node dist/durable-cli.js",
+    "web": "node dist/web-server.js"
+  },
+  "dependencies": {
+    "@product-woc/planning-adapters": "workspace:*",
+    "@product-woc/planning-contracts": "workspace:*",
+    "@product-woc/planning-renderer": "workspace:*",
+    "@product-woc/planning-workflow": "workspace:*"
+  }
+}

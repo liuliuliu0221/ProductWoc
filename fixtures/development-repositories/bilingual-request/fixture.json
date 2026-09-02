@@ -1,0 +1,16 @@
+{
+  "fixtureId": "bilingual-request",
+  "fixtureRevision": "1.0.0",
+  "category": "bilingual_request",
+  "request": { "primaryLanguage": "mixed", "text": "为 formatter 添加 locale fallback，并保留 English error code。" },
+  "planning": { "envelopeId": "env:bilingual-request-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:bilingual-request-v1", "technicalDesignVersionId": "design:bilingual-request-v1", "executionPlanVersionId": "plan:bilingual-request-v1", "phaseCount": 1, "taskCount": 2 },
+  "initialWorkspaceHash": "680344b2ab9b8e61bff44411e788d7a8c0bcd2a0b1dd39c6fd663bdded4a318b",
+  "modelSnapshot": { "snapshotId": "model:bilingual-request-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/formatter.ts", "README.md"],
+  "forbiddenBehaviors": ["discard_non_english_requirement", "stale_evidence_reuse", "network"],
+  "verificationCommands": ["pnpm test", "pnpm typecheck"],
+  "expectedEvidence": ["planning_stale_record", "model_snapshot_record", "requirement_trace"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["planning_stale", "stage_model_switch_invalidation"]
+}

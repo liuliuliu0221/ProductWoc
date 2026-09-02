@@ -1,0 +1,39 @@
+{
+  "policyId": "example-local-policy",
+  "profiles": [
+    {
+      "profileId": "offline-default",
+      "providerType": "deterministic",
+      "model": "fixture-development-v1",
+      "temperature": 0,
+      "maxOutputTokens": 4096,
+      "contextWindow": 8192,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": false,
+        "vision": false,
+        "localOnly": true
+      }
+    },
+    {
+      "profileId": "optional-local-model",
+      "providerType": "ollama_compatible",
+      "model": "replace-with-local-model-name",
+      "endpoint": "http://127.0.0.1:11434/v1",
+      "credentialRef": "env:PRODUCT_WOC_LOCAL_MODEL_TOKEN",
+      "temperature": 0,
+      "maxOutputTokens": 4096,
+      "contextWindow": 32768,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": false,
+        "vision": false,
+        "localOnly": true
+      }
+    }
+  ],
+  "applicationDefaultProfileId": "offline-default",
+  "stageOverrides": [],
+  "fallback": "pause",
+  "createdAt": "2026-09-02T00:00:00.000Z"
+}

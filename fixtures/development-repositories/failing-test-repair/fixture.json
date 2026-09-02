@@ -1,0 +1,16 @@
+{
+  "fixtureId": "failing-test-repair",
+  "fixtureRevision": "1.0.0",
+  "category": "failing_test_repair",
+  "request": { "primaryLanguage": "en", "text": "Repair slug normalization while respecting a two-attempt budget." },
+  "planning": { "envelopeId": "env:failing-test-repair-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:failing-test-repair-v1", "technicalDesignVersionId": "design:failing-test-repair-v1", "executionPlanVersionId": "plan:failing-test-repair-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "7f9ad8189c034274c1c6cf7f306f6bcf31c3da7507e2225f9215fa66ccdd5c9f",
+  "modelSnapshot": { "snapshotId": "model:failing-test-repair-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/slug.mjs"],
+  "forbiddenBehaviors": ["delete_failing_test", "unbounded_repair", "network"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["failed_test_report", "repair_record", "repair_budget_record"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["repair_budget_exhaustion"]
+}

@@ -1,0 +1,27 @@
+{
+  "developmentRunId": "development-run-fixture-1",
+  "envelopeId": "development-envelope-fixture-1",
+  "envelopeHash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "workspaceId": "workspace-fixture-1",
+  "projectId": "project-fixture-1",
+  "planningWorkflowRunId": "planning-run-fixture-1",
+  "projectSpecVersionId": "project-spec-version-fixture-1",
+  "projectSpecHash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "technicalDesignVersionId": "technical-design-version-fixture-1",
+  "technicalDesignHash": "3333333333333333333333333333333333333333333333333333333333333333",
+  "executionPlanVersionId": "execution-plan-version-fixture-1",
+  "executionPlanHash": "4444444444444444444444444444444444444444444444444444444444444444",
+  "approvalIds": [
+    "approval-project-spec-fixture-1",
+    "approval-technical-design-fixture-1",
+    "approval-execution-plan-fixture-1"
+  ],
+  "workflowDefinitionVersion": "2.0.0",
+  "workflowDefinitionChecksum": "5555555555555555555555555555555555555555555555555555555555555555",
+  "validationPolicyVersion": "1.0.0",
+  "taskGraphHash": "6666666666666666666666666666666666666666666666666666666666666666",
+  "workspaceBaselineHash": "7777777777777777777777777777777777777777777777777777777777777777",
+  "modelPolicySnapshotId": "model-policy-snapshot-fixture-1",
+  "toolPolicyVersion": "1.0.0",
+  "createdAt": "2026-08-28T00:00:00.000Z"
+}

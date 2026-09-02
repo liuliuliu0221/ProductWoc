@@ -1,0 +1,90 @@
+{
+  "architectureSummary": "A modular authenticated web application backed by PostgreSQL.",
+  "stack": [
+    { "capability": "web_framework", "selection": "Next.js 16", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "runtime", "selection": "Node.js 24", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "language", "selection": "TypeScript", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "database", "selection": "PostgreSQL/Neon", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "orm", "selection": "Drizzle", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "authentication", "selection": "Better Auth", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "workflow", "selection": "Temporal", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "sandbox", "selection": "E2B", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "repository", "selection": "GitHub App", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "deployment", "selection": "Netlify", "status": "compliant", "rationale": "ProductWoc golden stack" },
+    { "capability": "object_storage", "selection": "R2", "status": "compliant", "rationale": "ProductWoc golden stack" }
+  ],
+  "modules": [
+    {
+      "id": "module-core",
+      "name": "Core product module",
+      "responsibilities": ["Implement the primary product workflow"],
+      "dependsOn": []
+    }
+  ],
+  "dataEntities": [
+    {
+      "id": "entity-primary",
+      "name": "Primary record",
+      "purpose": "Persist the primary workflow state",
+      "sensitiveData": false,
+      "lifecycle": "Created by a workspace member and retained until workspace deletion"
+    }
+  ],
+  "apis": [
+    {
+      "id": "api-primary-create",
+      "method": "POST",
+      "path": "/api/records",
+      "purpose": "Create the primary record",
+      "authentication": "required",
+      "requirementIds": ["REQ-1"]
+    }
+  ],
+  "permissionRules": [
+    {
+      "id": "permission-primary",
+      "actor": "Workspace member",
+      "action": "manage",
+      "resource": "Primary record",
+      "condition": "The record belongs to the actor workspace"
+    }
+  ],
+  "stateLifecycles": [
+    {
+      "entity": "Primary record",
+      "states": ["draft", "active"],
+      "transitions": [
+        { "from": "draft", "to": "active", "trigger": "Member activates the record" }
+      ]
+    }
+  ],
+  "designItems": [
+    {
+      "id": "DES-1",
+      "title": "Primary workflow design",
+      "description": "Validate, authorize, and persist the primary workflow",
+      "requirementIds": ["REQ-1"],
+      "moduleIds": ["module-core"]
+    }
+  ],
+  "traceability": [
+    { "requirementId": "REQ-1", "disposition": "designed", "designItemIds": ["DES-1"] }
+  ],
+  "technicalDecisions": [],
+  "platformCapabilities": [
+    {
+      "capability": "planning-v2-persistence",
+      "status": "planned",
+      "evidence": "Durable standalone persistence is a planned optional adapter"
+    }
+  ],
+  "errorHandling": ["Return stable error codes and make failed operations retryable"],
+  "securityConsiderations": ["Enforce Workspace RBAC on every server query"],
+  "privacyConsiderations": ["Keep project records private to the workspace"],
+  "testStrategy": ["Unit test domain rules and integration test authenticated APIs"],
+  "observability": ["Record request IDs, latency, and redacted error summaries"],
+  "migrationStrategy": "Use additive reviewed migrations when durable persistence is enabled.",
+  "rollbackStrategy": "Disable the feature and retain additive data.",
+  "dependencies": [],
+  "risks": ["Durable production adapters are intentionally outside the standalone runtime"]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@product-woc/development-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "develop": "node dist/cli.js develop",
+    "status": "node dist/cli.js status",
+    "resume": "node dist/cli.js resume",
+    "verify": "node dist/cli.js verify",
+    "rollback": "node dist/cli.js rollback",
+    "models": "node dist/cli.js models",
+    "export-evidence": "node dist/cli.js export-evidence",
+    "web": "node dist/web-server.js"
+  },
+  "dependencies": {
+    "@product-woc/development-adapters": "workspace:*",
+    "@product-woc/development-contracts": "workspace:*",
+    "@product-woc/development-domain": "workspace:*",
+    "@product-woc/development-workflow": "workspace:*",
+    "@product-woc/planning-adapters": "workspace:*",
+    "@product-woc/planning-contracts": "workspace:*",
+    "@product-woc/planning-workflow": "workspace:*"
+  }
+}

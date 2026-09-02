@@ -1,0 +1,27 @@
+{
+  "developmentRunId": "development-run-fixture-invalid",
+  "envelopeId": "development-envelope-fixture-invalid",
+  "envelopeHash": "1111111111111111111111111111111111111111111111111111111111111111",
+  "workspaceId": "workspace-fixture-invalid",
+  "projectId": "project-fixture-invalid",
+  "planningWorkflowRunId": "planning-run-fixture-invalid",
+  "projectSpecVersionId": "project-spec-version-fixture-invalid",
+  "projectSpecHash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "technicalDesignVersionId": "technical-design-version-fixture-invalid",
+  "technicalDesignHash": "3333333333333333333333333333333333333333333333333333333333333333",
+  "executionPlanVersionId": "execution-plan-version-fixture-invalid",
+  "executionPlanHash": "4444444444444444444444444444444444444444444444444444444444444444",
+  "approvalIds": [
+    "approval-project-spec-fixture-invalid",
+    "approval-technical-design-fixture-invalid",
+    "approval-execution-plan-fixture-invalid"
+  ],
+  "workflowDefinitionVersion": "2.0.0",
+  "workflowDefinitionChecksum": "5555555555555555555555555555555555555555555555555555555555555555",
+  "validationPolicyVersion": "1.0.0",
+  "taskGraphHash": "invalid-hash",
+  "workspaceBaselineHash": "7777777777777777777777777777777777777777777777777777777777777777",
+  "modelPolicySnapshotId": "model-policy-snapshot-fixture-invalid",
+  "toolPolicyVersion": "1.0.0",
+  "createdAt": "2026-08-28T00:00:00.000Z"
+}

@@ -1,0 +1,13 @@
+{
+  "sourceSchemaHash": "f4317067daf9220b4a76d47ef1c4db153006b4860ca1953b64e0ffca912e762a",
+  "input": {
+    "projectId": "project-v1-fixture",
+    "idea": "Build a lightweight customer feedback tracker",
+    "requestedBy": "user-v1-fixture"
+  },
+  "expectedStatusPath": [
+    "generating_prd",
+    "awaiting_prd_approval",
+    "ready_for_technical_design"
+  ]
+}

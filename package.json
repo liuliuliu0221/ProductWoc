@@ -1,0 +1,46 @@
+{
+  "name": "product-woc",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.23.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "isolation:check": "node scripts/check-standalone-isolation.mjs",
+    "architecture:check": "node scripts/check-package-boundaries.mjs",
+    "fixtures:check": "node scripts/check-open-source-fixtures.mjs",
+    "release:hygiene": "node scripts/check-release-hygiene.mjs",
+    "release:hygiene:prelicense": "node scripts/check-release-hygiene.mjs --allow-missing-license",
+    "check": "pnpm isolation:check && pnpm architecture:check && pnpm fixtures:check && pnpm release:hygiene && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "standalone": "pnpm build && pnpm --filter @product-woc/planning-lab standalone",
+    "standalone:durable": "pnpm build && pnpm --filter @product-woc/planning-lab standalone:durable",
+    "web": "pnpm build && pnpm --filter @product-woc/planning-lab web",
+    "development:web": "pnpm build && pnpm --filter @product-woc/development-lab web",
+    "product-woc": "pnpm build && pnpm --filter @product-woc/development-lab exec node dist/cli.js",
+    "eval:gate": "pnpm --filter @product-woc/planning-evals test && pnpm --filter @product-woc/planning-lab test",
+    "p3:gate": "pnpm check",
+    "p3:c:gate": "pnpm architecture:check && pnpm --filter @product-woc/development-contracts lint && pnpm --filter @product-woc/development-contracts typecheck && pnpm --filter @product-woc/development-contracts test && pnpm --filter @product-woc/development-domain lint && pnpm --filter @product-woc/development-domain typecheck && pnpm --filter @product-woc/development-domain test",
+    "p3:d:gate": "pnpm isolation:check && pnpm architecture:check && pnpm fixtures:check && pnpm --filter @product-woc/development-contracts lint && pnpm --filter @product-woc/development-contracts typecheck && pnpm --filter @product-woc/development-contracts test && pnpm --filter @product-woc/development-adapters lint && pnpm --filter @product-woc/development-adapters typecheck && pnpm --filter @product-woc/development-adapters test",
+    "p3:e:gate": "pnpm isolation:check && pnpm architecture:check && pnpm fixtures:check && pnpm --filter @product-woc/development-contracts lint && pnpm --filter @product-woc/development-contracts typecheck && pnpm --filter @product-woc/development-contracts test && pnpm --filter @product-woc/development-domain test && pnpm --filter @product-woc/development-agent lint && pnpm --filter @product-woc/development-agent typecheck && pnpm --filter @product-woc/development-agent test && pnpm --filter @product-woc/development-adapters lint && pnpm --filter @product-woc/development-adapters typecheck && pnpm --filter @product-woc/development-adapters test",
+    "p3:f:gate": "pnpm isolation:check && pnpm architecture:check && pnpm fixtures:check && pnpm --filter @product-woc/development-contracts lint && pnpm --filter @product-woc/development-contracts typecheck && pnpm --filter @product-woc/development-contracts test && pnpm --filter @product-woc/development-domain lint && pnpm --filter @product-woc/development-domain typecheck && pnpm --filter @product-woc/development-domain test && pnpm --filter @product-woc/development-agent lint && pnpm --filter @product-woc/development-agent typecheck && pnpm --filter @product-woc/development-agent test && pnpm --filter @product-woc/development-adapters lint && pnpm --filter @product-woc/development-adapters typecheck && pnpm --filter @product-woc/development-adapters test && pnpm --filter @product-woc/development-workflow lint && pnpm --filter @product-woc/development-workflow typecheck && pnpm --filter @product-woc/development-workflow test && pnpm --filter @product-woc/development-evals lint && pnpm --filter @product-woc/development-evals typecheck && pnpm --filter @product-woc/development-evals test",
+    "p3:g:gate": "pnpm isolation:check && pnpm architecture:check && pnpm fixtures:check && pnpm --filter @product-woc/development-contracts lint && pnpm --filter @product-woc/development-contracts typecheck && pnpm --filter @product-woc/development-contracts test && pnpm --filter @product-woc/development-domain lint && pnpm --filter @product-woc/development-domain typecheck && pnpm --filter @product-woc/development-domain test && pnpm --filter @product-woc/development-agent lint && pnpm --filter @product-woc/development-agent typecheck && pnpm --filter @product-woc/development-agent test && pnpm --filter @product-woc/development-adapters lint && pnpm --filter @product-woc/development-adapters typecheck && pnpm --filter @product-woc/development-adapters test && pnpm --filter @product-woc/development-workflow lint && pnpm --filter @product-woc/development-workflow typecheck && pnpm --filter @product-woc/development-workflow test && pnpm --filter @product-woc/development-evals lint && pnpm --filter @product-woc/development-evals typecheck && pnpm --filter @product-woc/development-evals test",
+    "p3:h:gate": "pnpm p3:g:gate && pnpm --filter @product-woc/planning-lab lint && pnpm --filter @product-woc/planning-lab typecheck && pnpm --filter @product-woc/planning-lab test && pnpm --filter @product-woc/development-lab lint && pnpm --filter @product-woc/development-lab typecheck && pnpm --filter @product-woc/development-lab test && pnpm --filter @product-woc/development-lab build",
+    "p3:i:gate": "pnpm check"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "26.2.0",
+    "eslint": "9.39.5",
+    "turbo": "2.10.11",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0",
+    "vitest": "4.1.11"
+  }
+}

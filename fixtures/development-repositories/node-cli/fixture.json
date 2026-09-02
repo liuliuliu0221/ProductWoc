@@ -1,0 +1,16 @@
+{
+  "fixtureId": "node-cli",
+  "fixtureRevision": "1.0.0",
+  "category": "node_cli",
+  "request": { "primaryLanguage": "en", "text": "Add a --json output mode to the local CLI." },
+  "planning": { "envelopeId": "env:node-cli-v1", "envelopeRevision": 1, "projectSpecVersionId": "spec:node-cli-v1", "technicalDesignVersionId": "design:node-cli-v1", "executionPlanVersionId": "plan:node-cli-v1", "phaseCount": 1, "taskCount": 1 },
+  "initialWorkspaceHash": "66e7065868abdddd741cc562a188d5548be3322922d8bcb7a3cf46351f6d11eb",
+  "modelSnapshot": { "snapshotId": "model:node-cli-v1", "providerType": "deterministic", "model": "fixture-development-v1" },
+  "expectedPatchPaths": ["src/cli.mjs", "test/cli.test.mjs"],
+  "forbiddenBehaviors": ["network", "deployment", "shell_interpolation"],
+  "verificationCommands": ["node --test"],
+  "expectedEvidence": ["patch_journal", "test_report", "command_audit"],
+  "expectedOutcome": "completed",
+  "dirtyPaths": [],
+  "g3Scenarios": ["five_execution_plans"]
+}
