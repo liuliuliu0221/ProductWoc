@@ -14,6 +14,8 @@
 
 本文档定义 ProductWoc 如何消费阶段 2 生成的 `DevelopmentStartEnvelope`，在用户本地代码工作区中按 Execution Plan 执行任务、验证结果、有限修复并形成可审计证据。
 
+> 阶段 4 更新（2026-09-06）：本文件保留阶段 3 的历史架构基线。七个模型 Scope、不可变 Snapshot、能力协商和显式 Fallback 继续有效；模型配置权限和 Web 暴露方式已由 ADR 022 部分取代。当前设计由开发者/运行维护者在服务端配置模型，网页用户只能使用配置结果，不能查看或修改 Provider、Endpoint 或 Credential。
+
 ProductWoc 将作为独立开源项目发布到 GitHub。GitHub 负责源码协作、Issue、CI 和 Release，不承担 ProductWoc 应用托管。阶段 3 不设计远程部署、生产环境发布或云端执行平台。
 
 ## 2. 决策摘要

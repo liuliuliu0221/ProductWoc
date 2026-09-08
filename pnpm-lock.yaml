@@ -59,6 +59,9 @@ importers:
       '@product-woc/planning-workflow':
         specifier: workspace:*
         version: link:../../packages/planning-workflow
+      '@product-woc/runtime-config':
+        specifier: workspace:*
+        version: link:../../packages/runtime-config
 
   apps/planning-lab:
     dependencies:
@@ -74,6 +77,9 @@ importers:
       '@product-woc/planning-workflow':
         specifier: workspace:*
         version: link:../../packages/planning-workflow
+      '@product-woc/runtime-config':
+        specifier: workspace:*
+        version: link:../../packages/runtime-config
 
   packages/development-adapters:
     dependencies:
@@ -209,6 +215,12 @@ importers:
       '@product-woc/planning-domain':
         specifier: workspace:*
         version: link:../planning-domain
+
+  packages/runtime-config:
+    dependencies:
+      '@product-woc/development-contracts':
+        specifier: workspace:*
+        version: link:../development-contracts
 
 packages:
 

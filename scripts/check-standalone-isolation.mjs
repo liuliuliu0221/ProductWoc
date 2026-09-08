@@ -28,6 +28,14 @@ for (const packageFile of packageFiles) {
       }
     }
   }
+  for (const [name, command] of Object.entries(manifest.scripts ?? {})) {
+    if (
+      /@product-factory\//i.test(String(command)) ||
+      /(?:^|[/\\])ProductFac(?:[/\\]|$)/i.test(String(command))
+    ) {
+      violations.push(`${packageFile}: scripts.${name} invokes ProductFac`);
+    }
+  }
 }
 
 function sourceFiles(directory) {
@@ -54,6 +62,14 @@ for (const group of ["apps", "packages"]) {
     ) {
       violations.push(`${relative(root, sourceFile)}: ProductFac runtime import`);
     }
+    if (
+      /process\.env(?:\.[A-Z0-9_]*PRODUCT_?FAC[A-Z0-9_]*|\[["'][A-Z0-9_]*PRODUCT_?FAC[A-Z0-9_]*["']\])/i.test(source)
+    ) {
+      violations.push(`${relative(root, sourceFile)}: ProductFac runtime environment dependency`);
+    }
+    if (/https?:\/\/[^\s"'`]*productfac/i.test(source)) {
+      violations.push(`${relative(root, sourceFile)}: ProductFac runtime endpoint`);
+    }
   }
 }
 
@@ -62,6 +78,6 @@ if (violations.length > 0) {
   process.exitCode = 1;
 } else {
   process.stdout.write(
-    "Standalone isolation check passed: no ProductFac runtime dependency or source import.\n",
+    "Standalone isolation check passed: no ProductFac runtime dependency, source import, environment dependency or endpoint.\n",
   );
 }

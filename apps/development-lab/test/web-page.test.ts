@@ -11,9 +11,10 @@ describe("Development Web page", () => {
     expect(page).toContain("任务 DAG");
     expect(page).toContain("Patch 与 Diff");
     expect(page).toContain("验证、日志与 Evidence");
-    expect(page).toContain("阶段模型覆盖（所有用户功能一致）");
-    expect(page).toContain("save-stage-models");
-    expect(page).toContain("/api/development/stage-model");
+    expect(page).toContain("模型由开发者在服务端配置");
+    expect(page).toContain("网页用户只能查看脱敏后的阶段模型状态");
+    expect(page).not.toContain("save-stage-models");
+    expect(page).not.toContain("/api/development/stage-model");
     expect(page).toContain("/api/development/start");
     expect(page).toContain("暂停");
     expect(page).toContain("恢复");

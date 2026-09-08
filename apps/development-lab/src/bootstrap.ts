@@ -23,6 +23,7 @@ export interface BootstrapDevelopmentInput {
   developmentDataDirectory: string;
   requestId: string;
   occurredAt: string;
+  modelPolicySnapshotId?: string;
 }
 
 export async function bootstrapAndStartDevelopmentFromPlanning(
@@ -117,7 +118,7 @@ export async function bootstrapDevelopmentFromPlanning(
     technicalDesign: checkpoint.technicalDesign,
     executionPlan: checkpoint.executionPlan,
     workspaceBaselineHash: workspaceHash,
-    modelPolicySnapshotId: "local-model-policy",
+    modelPolicySnapshotId: input.modelPolicySnapshotId ?? "local-model-policy",
     toolPolicyVersion: "1.0.0",
     createdAt: input.occurredAt,
   });

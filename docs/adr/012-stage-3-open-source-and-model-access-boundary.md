@@ -1,6 +1,6 @@
 # ADR 012: Stage 3 open-source and model-access boundary
 
-- Status: accepted for P3-00
+- Status: accepted for P3-00; model-configuration authority superseded by ADR 022 for P4
 - Date: 2026-08-28
 
 ## Context
@@ -33,3 +33,11 @@ Stage 3 can evolve model routing without turning configuration into a commercial
 entitlement system. The repository carries less deployment and credential risk,
 but contributors must provide their own model endpoint for non-deterministic use.
 No public release is considered ready until a license is explicitly added.
+
+## P4 supersession note
+
+ADR 022 replaces the decision that every web user can configure model profiles and
+stage overrides. Beginning with P4, a developer/operator configures models on the
+server side and web users consume the configured service. The open-source,
+ProductFac-independent, offline-CI and no-deployment decisions in this ADR remain
+active.

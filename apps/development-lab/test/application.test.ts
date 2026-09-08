@@ -6,6 +6,7 @@ import {
   parseDurableDevelopmentCheckpoint,
   type DurableDevelopmentCheckpoint,
 } from "@product-woc/development-workflow";
+import { loadRuntimeConfiguration } from "@product-woc/runtime-config";
 
 import {
   DevelopmentLabApplication,
@@ -39,7 +40,11 @@ describe("Development Lab Application", () => {
     expect(view.phases[0]?.tasks[0]).toMatchObject({
       requirementIds: ["REQ-1"], acceptanceCriterionIds: ["AC-1"],
     });
-    expect(view.models.snapshots[0]).toMatchObject({ profileId: "local-profile", selectionSource: "stage_override" });
+    expect(view.models.snapshots[0]).toMatchObject({ selectionSource: "stage_override" });
+    expect(view.models).toMatchObject({
+      configurationAuthority: "developer_operator",
+      webEditable: false,
+    });
     expect(view.contexts).toHaveLength(1);
     expect(view.verification.logs[0]?.content).toBe("all checks passed");
     expect(view.actions).not.toContain("deploy");
@@ -98,35 +103,35 @@ describe("Development Lab Application", () => {
     expect(view.blockers).toEqual(expect.arrayContaining([expect.objectContaining({ kind: "workspace_drift" })]));
   });
 
-  it("persists stage Model Profile overrides for every editor with impact acknowledgement", async () => {
-    const { application, initialized } = await setup();
-    const binding = {
-      idempotencyKey: "configure-model-once",
-      checkpointRevision: initialized.revision,
-      workspaceHash: initialized.value.workspaceHash,
-      modelPolicyRevision: 0,
-      scope: "development.review" as const,
-      profileId: "ollama-local",
-      impactAcknowledged: true,
-    };
-    const configured = await application.configureStageModel(
-      "local-workspace", "demo-project", binding, editor, at,
-    );
-    expect(configured.models.stageOverrides).toContainEqual({
-      scope: "development.review",
-      profileId: "ollama-local",
+  it("projects model configuration as the same sanitized read-only view for every Web role", async () => {
+    const { application } = await setup();
+    const editorView = await application.get("local-workspace", "demo-project", editor);
+    const viewerView = await application.get("local-workspace", "demo-project", viewer);
+    expect(editorView.models).toEqual(viewerView.models);
+    expect(editorView.models.webEditable).toBe(false);
+    expect(editorView.models.configurationAuthority).toBe("developer_operator");
+    expect(editorView.models.stages).toHaveLength(7);
+    expect(JSON.stringify(editorView.models)).not.toContain("credentialRef");
+    expect(JSON.stringify(editorView.models)).not.toContain("endpointRef");
+    expect(editorView.permissions).not.toHaveProperty("canConfigureStageModels");
+  });
+
+  it("projects unavailable operator configuration without leaking diagnostics", async () => {
+    const { store } = await setup();
+    const runtime = await loadRuntimeConfiguration({
+      configPath: "/tmp/product-woc-development-config-does-not-exist.json",
+      environment: {},
     });
-    expect(configured.models.policyRevision).toBe(1);
-    const replayed = await application.configureStageModel(
-      "local-workspace", "demo-project", binding, editor, at,
+    const application = new DevelopmentLabApplication(
+      store,
+      {},
+      undefined,
+      runtime,
     );
-    expect(replayed.models.policyRevision).toBe(1);
-    await expect(application.configureStageModel(
-      "local-workspace",
-      "demo-project",
-      { ...binding, idempotencyKey: "missing-impact", modelPolicyRevision: 1, impactAcknowledged: false },
-      editor,
-      at,
-    )).rejects.toMatchObject({ code: "invalid_request" });
+    const view = await application.get("local-workspace", "demo-project", editor);
+    expect(view.models.status).toBe("unavailable");
+    expect(view.models.stages).toHaveLength(7);
+    expect(JSON.stringify(view.models)).not.toContain(runtime.sourcePath);
+    expect(JSON.stringify(view.models)).not.toContain("diagnostics");
   });
 });

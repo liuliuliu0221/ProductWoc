@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,6 +36,7 @@ const requiredFiles = [
   "docs/known-limitations.md",
   "docs/release-policy.md",
   "examples/model-policy.example.json",
+  "examples/runtime-config.example.json",
   ".github/workflows/ci.yml",
   ".github/ISSUE_TEMPLATE/bug_report.yml",
   ".github/ISSUE_TEMPLATE/feature_request.yml",
@@ -101,6 +102,25 @@ if (existsSync(examplePath)) {
   const credentialReferences = [...serialized.matchAll(/"credentialRef":"([^"]+)"/g)];
   if (credentialReferences.some(([, value]) => !value.startsWith("env:"))) {
     violations.push("examples/model-policy.example.json: credentials must be environment references");
+  }
+}
+
+const runtimeConfigExamplePath = join(root, "examples", "runtime-config.example.json");
+if (existsSync(runtimeConfigExamplePath)) {
+  const value = JSON.parse(readFileSync(runtimeConfigExamplePath, "utf8"));
+  const serialized = JSON.stringify(value);
+  const references = [
+    ...serialized.matchAll(/"(?:endpointRef|credentialRef)":"([^"]+)"/g),
+  ];
+  if (references.some(([, reference]) => !reference.startsWith("env:"))) {
+    violations.push(
+      "examples/runtime-config.example.json: endpoint and credential values must be environment references",
+    );
+  }
+  if (/"(?:apiKey|credential|credentialValue|secret)"\s*:/.test(serialized)) {
+    violations.push(
+      "examples/runtime-config.example.json: inline credential fields are forbidden",
+    );
   }
 }
 

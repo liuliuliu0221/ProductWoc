@@ -16,6 +16,7 @@
     "@product-woc/planning-adapters": "workspace:*",
     "@product-woc/planning-contracts": "workspace:*",
     "@product-woc/planning-renderer": "workspace:*",
-    "@product-woc/planning-workflow": "workspace:*"
+    "@product-woc/planning-workflow": "workspace:*",
+    "@product-woc/runtime-config": "workspace:*"
   }
 }

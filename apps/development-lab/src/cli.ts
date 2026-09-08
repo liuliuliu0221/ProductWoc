@@ -2,14 +2,11 @@ import { writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
 import {
-  FileDevelopmentCheckpointStore,
   NodeWorkspaceAdapter,
 } from "@product-woc/development-adapters";
-import {
-  parseDurableDevelopmentCheckpoint,
-} from "@product-woc/development-workflow";
 import { FileTransactionalCheckpointStore } from "@product-woc/planning-adapters";
 import type { DurableStandalonePlanningCheckpoint } from "@product-woc/planning-workflow";
+import { loadRuntimeConfiguration } from "@product-woc/runtime-config";
 
 import {
   DevelopmentLabApplication,
@@ -27,8 +24,18 @@ const actorId = process.env.PRODUCT_WOC_USER_ID ?? "local-user";
 const planningDirectory = process.env.PRODUCT_WOC_PLANNING_DATA_DIR ?? join(workspaceRoot, ".product-woc", "checkpoints");
 const developmentDirectory = process.env.PRODUCT_WOC_DEVELOPMENT_DATA_DIR ?? join(workspaceRoot, ".product-woc", "development-checkpoints");
 const actor: DevelopmentLabActor = { workspaceId, actorId, role: "editor" };
-const store = new FileDevelopmentCheckpointStore(developmentDirectory, parseDurableDevelopmentCheckpoint);
-const application = new DevelopmentLabApplication(store, createLocalDevelopmentActions(workspaceRoot));
+const runtimeConfiguration = await loadRuntimeConfiguration({
+  cwd: workspaceRoot,
+  ...(command === "config" && positional[0] === "validate" && positional[1]
+    ? { configPath: positional[1] }
+    : {}),
+});
+const application = DevelopmentLabApplication.fileBacked(
+  developmentDirectory,
+  createLocalDevelopmentActions(workspaceRoot),
+  join(workspaceRoot, ".product-woc", "model-policies"),
+  runtimeConfiguration,
+);
 
 function now(): string {
   return new Date().toISOString();
@@ -59,6 +66,9 @@ async function binding(scope: string) {
 }
 
 async function develop(): Promise<void> {
+  if (!runtimeConfiguration.readyForGeneration) {
+    throw new Error("Runtime model configuration is unavailable; run `product-woc config validate`");
+  }
   const bootstrapped = await bootstrapAndStartDevelopmentFromPlanning({
     workspaceId,
     projectId,
@@ -68,6 +78,12 @@ async function develop(): Promise<void> {
     developmentDataDirectory: developmentDirectory,
     requestId: `cli:develop:${projectId}`,
     occurredAt: now(),
+    ...(runtimeConfiguration.configurationHash
+      ? {
+          modelPolicySnapshotId:
+            `runtime:${runtimeConfiguration.configurationHash}`,
+        }
+      : {}),
   });
   print({
     command: "develop",
@@ -149,9 +165,36 @@ async function runAction(kind: "verify" | "rollback"): Promise<void> {
   print({ command: kind, status: view.status, checkpointRevision: view.checkpointRevision, currentTask: view.currentTask, blockers: view.blockers });
 }
 
+async function validateConfig(): Promise<void> {
+  print({
+    command: "config validate",
+    sourcePath: runtimeConfiguration.sourcePath,
+    valid: runtimeConfiguration.valid,
+    readyForGeneration: runtimeConfiguration.readyForGeneration,
+    configurationHash: runtimeConfiguration.configurationHash,
+    diagnostics: runtimeConfiguration.diagnostics,
+    snapshot: runtimeConfiguration.operatorSnapshot,
+  });
+  if (!runtimeConfiguration.valid) process.exitCode = 1;
+}
+
 async function models(): Promise<void> {
-  const view = await currentView();
-  print({ command: "models", ...view.models });
+  const action = positional[0] ?? "list";
+  if (!['list', 'test'].includes(action)) {
+    throw new Error("Unknown models command. Use models list or models test.");
+  }
+  print({
+    command: `models ${action}`,
+    sourcePath: runtimeConfiguration.sourcePath,
+    configurationHash: runtimeConfiguration.configurationHash,
+    readyForGeneration: runtimeConfiguration.readyForGeneration,
+    availability: runtimeConfiguration.availability,
+    diagnostics: runtimeConfiguration.diagnostics,
+    ...(action === "test"
+      ? { providerProbe: "configuration_and_environment_only_until_p4_02" }
+      : {}),
+  });
+  if (!runtimeConfiguration.readyForGeneration) process.exitCode = 1;
 }
 
 async function exportEvidence(): Promise<void> {
@@ -167,9 +210,10 @@ async function main(): Promise<void> {
   if (command === "resume") return resume();
   if (command === "verify") return runAction("verify");
   if (command === "rollback") return runAction("rollback");
+  if (command === "config" && positional[0] === "validate") return validateConfig();
   if (command === "models") return models();
   if (command === "export-evidence") return exportEvidence();
-  throw new Error("Unknown command. Use develop, status, resume, verify, rollback, models, or export-evidence.");
+  throw new Error("Unknown command. Use develop, status, resume, verify, rollback, config validate, models list, models test, or export-evidence.");
 }
 
 main().catch((error) => {

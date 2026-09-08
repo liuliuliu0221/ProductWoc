@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1",
+  "configurationAuthority": "developer_operator",
+  "runtimeMode": "service",
+  "profiles": [
+    {
+      "profileId": "general-model",
+      "providerType": "ollama",
+      "model": "replace-with-general-model",
+      "endpointRef": "env:PRODUCT_WOC_OLLAMA_ENDPOINT",
+      "temperature": 0.2,
+      "maxOutputTokens": 8192,
+      "contextWindow": 32768,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": true,
+        "vision": false,
+        "localOnly": true
+      }
+    },
+    {
+      "profileId": "product-model",
+      "providerType": "openai_compatible",
+      "model": "replace-with-product-model",
+      "endpointRef": "env:PRODUCT_WOC_PRODUCT_MODEL_ENDPOINT",
+      "credentialRef": "env:PRODUCT_WOC_PRODUCT_MODEL_CREDENTIAL",
+      "temperature": 0.2,
+      "maxOutputTokens": 12000,
+      "contextWindow": 65536,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": false,
+        "vision": false,
+        "localOnly": false
+      }
+    },
+    {
+      "profileId": "code-model",
+      "providerType": "openai_compatible",
+      "model": "replace-with-code-model",
+      "endpointRef": "env:PRODUCT_WOC_CODE_MODEL_ENDPOINT",
+      "credentialRef": "env:PRODUCT_WOC_CODE_MODEL_CREDENTIAL",
+      "temperature": 0.1,
+      "maxOutputTokens": 16000,
+      "contextWindow": 128000,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": true,
+        "vision": false,
+        "localOnly": false
+      }
+    }
+  ],
+  "applicationDefaultProfileId": "general-model",
+  "stageOverrides": [
+    {
+      "scope": "planning.project_spec",
+      "profileId": "product-model"
+    },
+    {
+      "scope": "planning.technical_design",
+      "profileId": "product-model"
+    },
+    {
+      "scope": "development.implementation",
+      "profileId": "code-model"
+    },
+    {
+      "scope": "development.review",
+      "profileId": "code-model"
+    },
+    {
+      "scope": "development.repair",
+      "profileId": "code-model"
+    }
+  ],
+  "fallbackPolicy": "pause"
+}

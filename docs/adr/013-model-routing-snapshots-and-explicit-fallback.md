@@ -1,6 +1,6 @@
 # ADR 013: Model routing snapshots and explicit fallback
 
-- Status: accepted for P3-01
+- Status: accepted for P3-01; configuration-authority clauses superseded by ADR 022 for P4
 - Date: 2026-08-28
 
 ## Context
@@ -42,3 +42,10 @@ Changing a Profile affects future Agent Runs only. The workflow layer will later
 persist snapshots and fallback events; P3-01 returns them without advancing any
 Development Run state. Live Endpoint verification remains an explicit local user
 action because CI does not require network access or credentials.
+
+## P4 supersession note
+
+ADR 022 assigns configuration authority to the developer/operator rather than to
+every web user. Operator-managed application defaults and stage overrides replace
+web-user model selection. Capability negotiation, immutable snapshots, redaction,
+pause-on-failure and explicit use of a preconfigured fallback remain active.

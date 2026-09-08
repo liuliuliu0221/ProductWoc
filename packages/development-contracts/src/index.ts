@@ -7,6 +7,7 @@ export const DEVELOPMENT_INPUT_SCHEMA_VERSION = "1.0.0";
 export const DEVELOPMENT_EVENT_SCHEMA_VERSION = "1.0.0";
 export const DEVELOPMENT_VALIDATION_POLICY_VERSION = "1.0.0";
 export const DEVELOPMENT_TOOL_POLICY_VERSION = "1.0.0";
+export const PRODUCT_WOC_RUNTIME_CONFIG_SCHEMA_VERSION = "1";
 
 export const developmentIdSchema = z
   .string()
@@ -77,10 +78,16 @@ export const modelStageScopeSchema = z.enum([
   "development.repair",
 ]);
 
+export const modelProviderTypeSchema = z.enum([
+  "deterministic",
+  "ollama",
+  "openai_compatible",
+]);
+
 export const modelProfileSchema = z
   .object({
     profileId: developmentIdSchema,
-    providerType: z.enum(["deterministic", "ollama", "openai_compatible"]),
+    providerType: modelProviderTypeSchema,
     model: z.string().trim().min(1).max(240),
     endpointRef: developmentIdSchema.optional(),
     credentialRef: developmentIdSchema.optional(),
@@ -206,6 +213,163 @@ export const modelPolicySchema = z
         code: "custom",
         path: ["fallbackProfileId"],
         message: "The fallback Model Profile must exist",
+      });
+    }
+  });
+
+export const modelConfigurationAuthoritySchema = z.literal(
+  "developer_operator",
+);
+
+export const productWocRuntimeModeSchema = z.enum([
+  "service",
+  "test",
+  "demo",
+]);
+
+export const productWocRuntimeConfigSchema = z
+  .object({
+    schemaVersion: z.literal(PRODUCT_WOC_RUNTIME_CONFIG_SCHEMA_VERSION),
+    configurationAuthority: modelConfigurationAuthoritySchema,
+    runtimeMode: productWocRuntimeModeSchema,
+    profiles: z.array(modelProfileSchema).min(1),
+    applicationDefaultProfileId: developmentIdSchema,
+    stageOverrides: z.array(stageModelOverrideSchema),
+    fallbackPolicy: z.enum(["pause", "confirm_preconfigured"]),
+    fallbackProfileId: developmentIdSchema.optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const profiles = new Map(
+      value.profiles.map((profile) => [profile.profileId, profile]),
+    );
+    if (profiles.size !== value.profiles.length) {
+      context.addIssue({
+        code: "custom",
+        path: ["profiles"],
+        message: "Runtime Model Profile IDs must be unique",
+      });
+    }
+    if (!profiles.has(value.applicationDefaultProfileId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["applicationDefaultProfileId"],
+        message: "The runtime default Model Profile must exist",
+      });
+    }
+
+    const overriddenScopes = new Set<string>();
+    for (const [index, override] of value.stageOverrides.entries()) {
+      if (!profiles.has(override.profileId)) {
+        context.addIssue({
+          code: "custom",
+          path: ["stageOverrides", index, "profileId"],
+          message: "The runtime stage Model Profile must exist",
+        });
+      }
+      if (overriddenScopes.has(override.scope)) {
+        context.addIssue({
+          code: "custom",
+          path: ["stageOverrides", index, "scope"],
+          message: "A runtime stage can have only one Model Profile override",
+        });
+      }
+      overriddenScopes.add(override.scope);
+    }
+
+    if (
+      value.fallbackPolicy === "confirm_preconfigured" &&
+      !value.fallbackProfileId
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["fallbackProfileId"],
+        message: "A preconfigured fallback requires a Model Profile",
+      });
+    }
+    if (value.fallbackPolicy === "pause" && value.fallbackProfileId) {
+      context.addIssue({
+        code: "custom",
+        path: ["fallbackProfileId"],
+        message: "A paused runtime cannot configure a fallback Model Profile",
+      });
+    }
+    if (value.fallbackProfileId && !profiles.has(value.fallbackProfileId)) {
+      context.addIssue({
+        code: "custom",
+        path: ["fallbackProfileId"],
+        message: "The runtime fallback Model Profile must exist",
+      });
+    }
+
+    if (value.runtimeMode === "service") {
+      const selectedProfileIds = new Set([
+        value.applicationDefaultProfileId,
+        ...value.stageOverrides.map(({ profileId }) => profileId),
+        ...(value.fallbackProfileId ? [value.fallbackProfileId] : []),
+      ]);
+      for (const profileId of selectedProfileIds) {
+        if (profiles.get(profileId)?.providerType === "deterministic") {
+          context.addIssue({
+            code: "custom",
+            path: ["profiles"],
+            message:
+              "Service mode cannot route a stage or fallback to the deterministic test provider",
+          });
+          break;
+        }
+      }
+    }
+  });
+
+export const modelAvailabilityStatusSchema = z.enum([
+  "configured",
+  "test_mode",
+  "unavailable",
+  "degraded",
+]);
+
+export const modelStageAvailabilitySchema = z
+  .object({
+    scope: modelStageScopeSchema,
+    providerType: modelProviderTypeSchema.optional(),
+    modelLabel: z.string().trim().min(1).max(240).optional(),
+    selectionSource: z
+      .enum(["stage_override", "application_default"])
+      .optional(),
+    status: modelAvailabilityStatusSchema,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (
+      value.status !== "unavailable" &&
+      (!value.providerType || !value.modelLabel || !value.selectionSource)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "An available stage must include sanitized model provenance",
+      });
+    }
+  });
+
+export const modelAvailabilityViewSchema = z
+  .object({
+    configurationAuthority: modelConfigurationAuthoritySchema,
+    webEditable: z.literal(false),
+    status: modelAvailabilityStatusSchema,
+    stages: z.array(modelStageAvailabilitySchema).min(1),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const scopes = new Set(value.stages.map(({ scope }) => scope));
+    if (
+      scopes.size !== modelStageScopeSchema.options.length ||
+      value.stages.length !== modelStageScopeSchema.options.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["stages"],
+        message: "A sanitized availability view must contain every stage exactly once",
       });
     }
   });
@@ -1522,11 +1686,30 @@ export type TaskRunStatus = z.infer<typeof taskRunStatusSchema>;
 export type PhaseRunStatus = z.infer<typeof phaseRunStatusSchema>;
 export type AgentRunStatus = z.infer<typeof agentRunStatusSchema>;
 export type ModelStageScope = z.infer<typeof modelStageScopeSchema>;
+export type ModelProviderType = z.infer<typeof modelProviderTypeSchema>;
 export type ModelProfile = z.infer<typeof modelProfileSchema>;
 export type ModelCapabilityRequirement = z.infer<
   typeof modelCapabilityRequirementSchema
 >;
 export type ModelPolicy = z.infer<typeof modelPolicySchema>;
+export type ModelConfigurationAuthority = z.infer<
+  typeof modelConfigurationAuthoritySchema
+>;
+export type ProductWocRuntimeMode = z.infer<
+  typeof productWocRuntimeModeSchema
+>;
+export type ProductWocRuntimeConfig = z.infer<
+  typeof productWocRuntimeConfigSchema
+>;
+export type ModelAvailabilityStatus = z.infer<
+  typeof modelAvailabilityStatusSchema
+>;
+export type ModelStageAvailability = z.infer<
+  typeof modelStageAvailabilitySchema
+>;
+export type ModelAvailabilityView = z.infer<
+  typeof modelAvailabilityViewSchema
+>;
 export type ModelSelectionSource = z.infer<typeof modelSelectionSourceSchema>;
 export type ModelRunSnapshot = z.infer<typeof modelRunSnapshotSchema>;
 export type ModelFallbackEvent = z.infer<typeof modelFallbackEventSchema>;

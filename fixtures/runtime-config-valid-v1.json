@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1",
+  "configurationAuthority": "developer_operator",
+  "runtimeMode": "service",
+  "profiles": [
+    {
+      "profileId": "local-general",
+      "providerType": "ollama",
+      "model": "operator-selected-general-model",
+      "endpointRef": "env:PRODUCT_WOC_OLLAMA_ENDPOINT",
+      "temperature": 0.2,
+      "maxOutputTokens": 8192,
+      "contextWindow": 32768,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": true,
+        "vision": false,
+        "localOnly": true
+      }
+    },
+    {
+      "profileId": "product-planner",
+      "providerType": "openai_compatible",
+      "model": "operator-selected-planning-model",
+      "endpointRef": "env:PRODUCT_WOC_PLANNING_ENDPOINT",
+      "credentialRef": "env:PRODUCT_WOC_PLANNING_CREDENTIAL",
+      "temperature": 0.2,
+      "maxOutputTokens": 12000,
+      "contextWindow": 65536,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": false,
+        "vision": false,
+        "localOnly": false
+      }
+    },
+    {
+      "profileId": "code-agent",
+      "providerType": "openai_compatible",
+      "model": "operator-selected-code-model",
+      "endpointRef": "env:PRODUCT_WOC_CODE_ENDPOINT",
+      "credentialRef": "env:PRODUCT_WOC_CODE_CREDENTIAL",
+      "temperature": 0.1,
+      "maxOutputTokens": 16000,
+      "contextWindow": 128000,
+      "capabilities": {
+        "structuredOutput": true,
+        "toolCalling": true,
+        "vision": false,
+        "localOnly": false
+      }
+    }
+  ],
+  "applicationDefaultProfileId": "local-general",
+  "stageOverrides": [
+    {
+      "scope": "planning.project_spec",
+      "profileId": "product-planner"
+    },
+    {
+      "scope": "planning.technical_design",
+      "profileId": "product-planner"
+    },
+    {
+      "scope": "development.implementation",
+      "profileId": "code-agent"
+    }
+  ],
+  "fallbackPolicy": "pause"
+}

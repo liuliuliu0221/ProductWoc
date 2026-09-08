@@ -1,6 +1,6 @@
 # ADR 019: Development Web, CLI and local model policy
 
-- Status: accepted for P3-07
+- Status: accepted for P3-07; browser model-editing decision superseded by ADR 022 for P4
 - Date: 2026-09-02
 
 ## Context
@@ -48,3 +48,12 @@ configuration can evolve independently from immutable Run snapshots, but future
 Agent execution work must read the selected project policy when creating each new
 Model Snapshot. The fixed local ports are a development convention and may later
 be made discoverable without changing the Checkpoint contract.
+
+## P4 supersession note
+
+ADR 022 removes model-policy editing from the ordinary Web surface. Development
+Web may show sanitized availability, provenance and locked-snapshot information,
+but only the developer/operator can modify profiles, defaults, stage overrides or
+fallback policy through server-side configuration and developer tooling. The
+Checkpoint, concurrency, SSE, CLI evidence and no-deployment decisions remain
+active.

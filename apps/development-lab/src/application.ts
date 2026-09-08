@@ -2,11 +2,13 @@ import {
   type DevelopmentCheckpointStore,
   FileDevelopmentCheckpointStore,
 } from "@product-woc/development-adapters";
-import type {
-  DevelopmentControlCommand,
-  DevelopmentRunStatus,
-  ModelStageScope,
-  TaskRunStatus,
+import {
+  modelStageScopeSchema,
+  type DevelopmentControlCommand,
+  type DevelopmentRunStatus,
+  type ModelAvailabilityStatus,
+  type ModelAvailabilityView,
+  type TaskRunStatus,
 } from "@product-woc/development-contracts";
 import { confirmPhaseGate } from "@product-woc/development-domain";
 import {
@@ -17,6 +19,7 @@ import {
   type DurableDevelopmentCheckpoint,
 } from "@product-woc/development-workflow";
 import type { DevelopmentStartEnvelope } from "@product-woc/planning-contracts";
+import type { RuntimeConfigurationState } from "@product-woc/runtime-config";
 
 import {
   defaultModelPolicy,
@@ -114,29 +117,18 @@ export interface DevelopmentPageViewModel {
     designItemIds: readonly string[];
   };
   models: {
-    projectDefaultSnapshotId: string;
-    policyRevision: number;
-    projectDefaultProfileId: string;
-    profiles: readonly {
-      profileId: string;
-      providerType: string;
-      model: string;
-      status: "available" | "requires_local_configuration";
-    }[];
-    stageOverrides: readonly {
-      scope: ModelStageScope;
-      profileId: string;
-    }[];
+    configurationAuthority: "developer_operator";
+    webEditable: false;
+    status: ModelAvailabilityStatus;
+    stages: ModelAvailabilityView["stages"];
     snapshots: readonly {
       snapshotId: string;
       scope: string;
-      profileId: string;
       model: string;
       providerType: string;
       selectionSource: string;
       status: "configured";
     }[];
-    stageOverridesAvailableToAllUsers: true;
   };
   contexts: readonly {
     contextSnapshotId: string;
@@ -183,7 +175,6 @@ export interface DevelopmentPageViewModel {
     canRollback: boolean;
     canCancel: boolean;
     canGate: boolean;
-    canConfigureStageModels: boolean;
   };
   actions: readonly ["pause", "resume", "retry", "verify", "rollback", "cancel", "gate"];
 }
@@ -267,6 +258,7 @@ export function developmentViewFrom(
   actor: DevelopmentLabActor,
   actions: DevelopmentLabActionPort = {},
   modelPolicyValue?: StoredModelPolicy,
+  modelAvailabilityValue?: ModelAvailabilityView,
 ): DevelopmentPageViewModel {
   const checkpoint = parseDurableDevelopmentCheckpoint(checkpointValue);
   assertWorkspace(actor, checkpoint.aggregate.input.workspaceId);
@@ -288,6 +280,44 @@ export function developmentViewFrom(
     checkpoint.aggregate.input.projectId,
     checkpoint.createdAt,
   );
+  const defaultProfileId =
+    modelPolicy.policy.projectDefaultProfileId ??
+    modelPolicy.policy.applicationDefaultProfileId;
+  const fallbackModelStages = modelStageScopeSchema.options.map((scope) => {
+    const override = modelPolicy.policy.stageOverrides.find(
+      (candidate) => candidate.scope === scope,
+    );
+    const profile = modelPolicy.policy.profiles.find(
+      ({ profileId }) => profileId === (override?.profileId ?? defaultProfileId),
+    );
+    if (!profile) {
+      throw new DevelopmentLabError(
+        "unavailable",
+        `The operator model configuration cannot resolve ${scope}`,
+      );
+    }
+    return {
+      scope,
+      providerType: profile.providerType,
+      modelLabel: profile.model,
+      selectionSource: override
+        ? "stage_override" as const
+        : "application_default" as const,
+      status: profile.providerType === "deterministic"
+        ? "test_mode" as const
+        : "unavailable" as const,
+    };
+  });
+  const modelStatuses = new Set(fallbackModelStages.map(({ status }) => status));
+  const fallbackModelStatus: ModelAvailabilityStatus = modelStatuses.size === 1
+    ? (fallbackModelStages[0]?.status ?? "unavailable")
+    : "degraded";
+  const modelAvailability = modelAvailabilityValue ?? {
+    configurationAuthority: "developer_operator" as const,
+    webEditable: false as const,
+    status: fallbackModelStatus,
+    stages: fallbackModelStages,
+  };
   return {
     workspaceId: checkpoint.aggregate.input.workspaceId,
     projectId: checkpoint.aggregate.input.projectId,
@@ -349,27 +379,15 @@ export function developmentViewFrom(
         }
       : {}),
     models: {
-      projectDefaultSnapshotId: checkpoint.aggregate.input.modelPolicySnapshotId,
-      policyRevision: modelPolicy.revision,
-      projectDefaultProfileId:
-        modelPolicy.policy.projectDefaultProfileId ?? modelPolicy.policy.applicationDefaultProfileId,
-      profiles: modelPolicy.policy.profiles.map((profile) => ({
-        profileId: profile.profileId,
-        providerType: profile.providerType,
-        model: profile.model,
-        status: profile.providerType === "deterministic" ? "available" as const : "requires_local_configuration" as const,
-      })),
-      stageOverrides: modelPolicy.policy.stageOverrides,
+      ...modelAvailability,
       snapshots: checkpoint.modelSnapshots.map((snapshot) => ({
         snapshotId: snapshot.snapshotId,
         scope: snapshot.scope,
-        profileId: snapshot.profile.profileId,
         model: snapshot.profile.model,
         providerType: snapshot.profile.providerType,
         selectionSource: snapshot.selectionSource,
         status: "configured" as const,
       })),
-      stageOverridesAvailableToAllUsers: true,
     },
     contexts: checkpoint.contextSnapshots.map((context) => ({
       contextSnapshotId: context.contextSnapshotId,
@@ -414,7 +432,6 @@ export function developmentViewFrom(
       canRollback: editable && Boolean(actions.rollback) && Boolean(currentPatch) && ["verifying", "repairing"].includes(currentTaskRun?.status ?? ""),
       canCancel: editable && !["completed", "cancelled", "failed"].includes(runStatus),
       canGate: editable && runStatus === "awaiting_user_gate",
-      canConfigureStageModels: editable,
     },
     actions: ["pause", "resume", "retry", "verify", "rollback", "cancel", "gate"],
   };
@@ -425,21 +442,49 @@ export class DevelopmentLabApplication {
     private readonly store: DevelopmentCheckpointStore<DurableDevelopmentCheckpoint>,
     private readonly actions: DevelopmentLabActionPort = {},
     private readonly modelPolicies: DevelopmentModelPolicyStore = new InMemoryDevelopmentModelPolicyStore(),
+    private readonly runtimeConfiguration?: RuntimeConfigurationState,
   ) {}
 
   public static fileBacked(
     directory: string,
     actions: DevelopmentLabActionPort = {},
     modelPolicyDirectory = `${directory}-model-policies`,
+    runtimeConfiguration?: RuntimeConfigurationState,
   ): DevelopmentLabApplication {
     return new DevelopmentLabApplication(
       new FileDevelopmentCheckpointStore(directory, parseDurableDevelopmentCheckpoint),
       actions,
       new FileDevelopmentModelPolicyStore(modelPolicyDirectory),
+      runtimeConfiguration,
     );
   }
 
   private async modelPolicy(checkpoint: DurableDevelopmentCheckpoint): Promise<StoredModelPolicy> {
+    const runtime = this.runtimeConfiguration;
+    if (runtime?.config && runtime.configurationHash) {
+      const timestamp = runtime.operatorSnapshot?.loadedAt ?? checkpoint.createdAt;
+      return {
+        schemaVersion: "1.0.0",
+        workspaceId: checkpoint.aggregate.input.workspaceId,
+        projectId: checkpoint.aggregate.input.projectId,
+        revision: 0,
+        policy: {
+          policyId: `runtime:${runtime.configurationHash.slice(0, 48)}`,
+          profiles: runtime.config.profiles,
+          applicationDefaultProfileId: runtime.config.applicationDefaultProfileId,
+          stageOverrides: runtime.config.stageOverrides,
+          fallback: runtime.config.fallbackPolicy === "pause"
+            ? "pause"
+            : "explicit_profile",
+          ...(runtime.config.fallbackProfileId
+            ? { fallbackProfileId: runtime.config.fallbackProfileId }
+            : {}),
+          createdAt: timestamp,
+        },
+        processedRequests: {},
+        updatedAt: timestamp,
+      };
+    }
     return await this.modelPolicies.load(
       checkpoint.aggregate.input.workspaceId,
       checkpoint.aggregate.input.projectId,
@@ -461,6 +506,7 @@ export class DevelopmentLabApplication {
       actor,
       this.actions,
       await this.modelPolicy(checkpoint),
+      this.runtimeConfiguration?.availability,
     );
   }
 
@@ -604,58 +650,6 @@ export class DevelopmentLabApplication {
       }),
     });
     return this.view(outcome.checkpointRevision, outcome.checkpoint, actor);
-  }
-
-  public async configureStageModel(
-    workspaceId: string,
-    projectId: string,
-    input: DevelopmentWriteBinding & {
-      modelPolicyRevision: number;
-      scope: ModelStageScope;
-      profileId: string;
-      impactAcknowledged: boolean;
-    },
-    actor: DevelopmentLabActor,
-    occurredAt: string,
-  ): Promise<DevelopmentPageViewModel> {
-    assertEditor(actor);
-    const { stored, checkpoint } = await this.loaded(workspaceId, projectId, actor);
-    assertBinding(stored.revision, checkpoint, input);
-    if (!input.impactAcknowledged) {
-      throw new DevelopmentLabError("invalid_request", "Model change impact must be acknowledged");
-    }
-    const current = await this.modelPolicy(checkpoint);
-    if (current.processedRequests[input.idempotencyKey]) {
-      return developmentViewFrom(stored.revision, checkpoint, actor, this.actions, current);
-    }
-    if (current.revision !== input.modelPolicyRevision) {
-      throw new DevelopmentLabError("conflict", "Model Policy Revision is stale");
-    }
-    if (!current.policy.profiles.some(({ profileId }) => profileId === input.profileId)) {
-      throw new DevelopmentLabError("invalid_request", "Unknown Model Profile");
-    }
-    const stageOverrides = [
-      ...current.policy.stageOverrides.filter(({ scope }) => scope !== input.scope),
-      { scope: input.scope, profileId: input.profileId },
-    ];
-    try {
-      const saved = await this.modelPolicies.save({
-        ...current,
-        revision: current.revision + 1,
-        policy: { ...current.policy, stageOverrides },
-        processedRequests: {
-          ...current.processedRequests,
-          [input.idempotencyKey]: `${input.scope}:${input.profileId}`,
-        },
-        updatedAt: occurredAt,
-      }, current.revision);
-      return developmentViewFrom(stored.revision, checkpoint, actor, this.actions, saved);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("Revision is stale")) {
-        throw new DevelopmentLabError("conflict", error.message);
-      }
-      throw error;
-    }
   }
 
   public async exportEvidence(

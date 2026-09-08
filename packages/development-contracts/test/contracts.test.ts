@@ -17,7 +17,10 @@ import {
   developmentPendingOperationSchema,
   developmentRecoveryAuditSchema,
   modelPolicySchema,
+  modelAvailabilityViewSchema,
   modelRunSnapshotSchema,
+  modelStageScopeSchema,
+  productWocRuntimeConfigSchema,
   changeProposalSchema,
   patchJournalEntrySchema,
   patchTransactionResultSchema,
@@ -164,6 +167,128 @@ describe("development v1 contracts", () => {
         ],
         fallback: "pause",
         createdAt: "2026-08-28T00:00:00.000Z",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts the operator-managed runtime configuration fixture", () => {
+    const parsed = productWocRuntimeConfigSchema.parse(
+      loadFixture("runtime-config-valid-v1.json"),
+    );
+    expect(parsed.configurationAuthority).toBe("developer_operator");
+    expect(parsed.stageOverrides.map(({ scope }) => scope)).toEqual([
+      "planning.project_spec",
+      "planning.technical_design",
+      "development.implementation",
+    ]);
+  });
+
+  it("rejects inline credentials and unknown browser-oriented fields", () => {
+    expect(
+      productWocRuntimeConfigSchema.safeParse(
+        loadFixture("runtime-config-invalid-credential-v1.json"),
+      ).success,
+    ).toBe(false);
+    const valid = loadFixture("runtime-config-valid-v1.json") as Record<string, unknown>;
+    expect(
+      productWocRuntimeConfigSchema.safeParse({
+        ...valid,
+        webUserCanConfigureModels: true,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects duplicate or unknown runtime stage overrides and a missing default", () => {
+    const valid = loadFixture("runtime-config-valid-v1.json") as {
+      profiles: unknown[];
+      stageOverrides: unknown[];
+      [key: string]: unknown;
+    };
+    expect(
+      productWocRuntimeConfigSchema.safeParse({
+        ...valid,
+        stageOverrides: [
+          { scope: "planning.project_spec", profileId: "product-planner" },
+          { scope: "planning.project_spec", profileId: "local-general" },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      productWocRuntimeConfigSchema.safeParse({
+        ...valid,
+        stageOverrides: [
+          { scope: "planning.unknown", profileId: "product-planner" },
+        ],
+      }).success,
+    ).toBe(false);
+    expect(
+      productWocRuntimeConfigSchema.safeParse({
+        ...valid,
+        applicationDefaultProfileId: "missing-profile",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("keeps the deterministic provider out of normal service routes", () => {
+    const valid = loadFixture("runtime-config-valid-v1.json") as {
+      profiles: unknown[];
+      [key: string]: unknown;
+    };
+    const deterministic = {
+      profileId: "fixture-only",
+      providerType: "deterministic",
+      model: "fixture-v1",
+      temperature: 0,
+      maxOutputTokens: 4096,
+      capabilities: {
+        structuredOutput: true,
+        toolCalling: false,
+        vision: false,
+        localOnly: true,
+      },
+    };
+    expect(
+      productWocRuntimeConfigSchema.safeParse({
+        ...valid,
+        profiles: [...valid.profiles, deterministic],
+        applicationDefaultProfileId: "fixture-only",
+      }).success,
+    ).toBe(false);
+    expect(
+      productWocRuntimeConfigSchema.safeParse({
+        ...valid,
+        runtimeMode: "test",
+        profiles: [deterministic],
+        applicationDefaultProfileId: "fixture-only",
+        stageOverrides: [],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("defines a strict sanitized, read-only Web model availability view", () => {
+    const view = {
+      configurationAuthority: "developer_operator",
+      webEditable: false,
+      status: "configured",
+      stages: modelStageScopeSchema.options.map((scope) => ({
+          scope,
+          providerType: "openai_compatible",
+          modelLabel: "configured planning model",
+          selectionSource: "stage_override",
+          status: "configured",
+      })),
+    };
+    expect(modelAvailabilityViewSchema.safeParse(view).success).toBe(true);
+    expect(
+      modelAvailabilityViewSchema.safeParse({
+        ...view,
+        credentialRef: "env:DO_NOT_EXPOSE",
+      }).success,
+    ).toBe(false);
+    expect(
+      modelAvailabilityViewSchema.safeParse({
+        ...view,
+        webEditable: true,
       }).success,
     ).toBe(false);
   });

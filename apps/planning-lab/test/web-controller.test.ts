@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { InMemoryTransactionalCheckpointStore } from "@product-woc/planning-adapters";
 import type { DurableStandalonePlanningCheckpoint } from "@product-woc/planning-workflow";
+import { loadRuntimeConfiguration } from "@product-woc/runtime-config";
 
 import {
   PlanningWebController,
@@ -158,5 +159,30 @@ describe("PlanningWebController", () => {
     expect(serialized).not.toContain("13800138000");
     expect(serialized).not.toContain("another-secret-value");
     expect(serialized).toContain("[REDACTED:");
+  });
+
+  it("blocks new generation when operator configuration is unavailable", async () => {
+    const store = new InMemoryTransactionalCheckpointStore<DurableStandalonePlanningCheckpoint>();
+    const available = new PlanningWebController(store);
+    const historical = await available.start(
+      { ...request, projectId: "historical-project", requestId: "historical-start" },
+      editor,
+    );
+    expect(historical.models.status).toBe("test_mode");
+
+    const unavailable = await loadRuntimeConfiguration({
+      configPath: "/tmp/product-woc-config-does-not-exist.json",
+      environment: {},
+    });
+    const blocked = new PlanningWebController(store, undefined, unavailable);
+    await expect(blocked.start(
+      { ...request, projectId: "blocked-project", requestId: "blocked-start" },
+      editor,
+    )).rejects.toMatchObject({ code: "unavailable" });
+
+    const readOnly = await blocked.get("workspace-a", "historical-project", editor);
+    expect(readOnly.models.status).toBe("unavailable");
+    expect(readOnly.permissions.canApprove).toBe(false);
+    expect(JSON.stringify(readOnly.models)).not.toContain("Ref");
   });
 });

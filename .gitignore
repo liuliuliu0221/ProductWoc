@@ -6,6 +6,7 @@ coverage/
 .DS_Store
 *.tsbuildinfo
 .product-woc/
+productwoc.config.json
 .env
 .env.*
 !.env.example

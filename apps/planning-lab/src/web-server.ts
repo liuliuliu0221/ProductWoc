@@ -3,6 +3,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import {
+  createDeterministicTestRuntimeConfigurationState,
+  loadRuntimeConfiguration,
+  type RuntimeConfigurationState,
+} from "@product-woc/runtime-config";
+
 import { renderPlanningPage } from "./web-page.js";
 import {
   PlanningWebController,
@@ -67,7 +73,7 @@ function idempotencyKey(request: IncomingMessage): string {
 
 function statusFor(error: unknown): number {
   if (error instanceof PlanningWebError) {
-    return { forbidden: 403, not_found: 404, conflict: 409, invalid_request: 400 }[
+    return { forbidden: 403, not_found: 404, conflict: 409, invalid_request: 400, unavailable: 503 }[
       error.code
     ];
   }
@@ -77,10 +83,14 @@ function statusFor(error: unknown): number {
 export function createPlanningWebServer(options?: {
   dataDirectory?: string;
   actor?: PlanningWebActor;
+  runtimeConfiguration?: RuntimeConfigurationState;
 }) {
   const actor = options?.actor ?? localActor;
+  const runtimeConfiguration = options?.runtimeConfiguration ??
+    createDeterministicTestRuntimeConfigurationState();
   const controller = PlanningWebController.fileBacked(
     options?.dataDirectory ?? defaultDataDirectory,
+    runtimeConfiguration,
   );
   const streams = new Set<ServerResponse>();
   const broadcast = (view: unknown): void => {
@@ -113,6 +123,10 @@ export function createPlanningWebServer(options?: {
         response.write("event: connected\ndata: {}\n\n");
         streams.add(response);
         request.on("close", () => streams.delete(response));
+        return;
+      }
+      if (request.method === "GET" && url.pathname === "/api/models") {
+        json(response, 200, runtimeConfiguration.availability);
         return;
       }
       if (request.method === "GET" && url.pathname === "/api/session") {
@@ -200,7 +214,15 @@ export function createPlanningWebServer(options?: {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PRODUCT_WOC_WEB_PORT ?? "4173");
   const host = "127.0.0.1";
-  const server = createPlanningWebServer();
+  const runtimeConfiguration = await loadRuntimeConfiguration({ cwd: process.cwd() });
+  if (!runtimeConfiguration.valid) {
+    process.stderr.write(
+      `ProductWoc model configuration unavailable; run \`product-woc config validate\`:\n${runtimeConfiguration.diagnostics
+        .map(({ code, path }) => `- ${code}${path ? ` (${path})` : ""}`)
+        .join("\n")}\n`,
+    );
+  }
+  const server = createPlanningWebServer({ runtimeConfiguration });
   server.listen(port, host, () => {
     process.stdout.write(`ProductWoc Web: http://${host}:${port}\n`);
   });

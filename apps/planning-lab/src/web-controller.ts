@@ -29,6 +29,11 @@ import {
   type StandalonePlanningPorts,
   type StandalonePlanningRequest,
 } from "@product-woc/planning-workflow";
+import {
+  createDeterministicTestRuntimeConfigurationState,
+  type ModelAvailabilityView,
+  type RuntimeConfigurationState,
+} from "@product-woc/runtime-config";
 
 export type PlanningWebRole = "viewer" | "editor";
 
@@ -69,6 +74,7 @@ export interface PlanningPageViewModel {
   currentHash?: string;
   documents: readonly PlanningDocumentView[];
   approvals: number;
+  models: ModelAvailabilityView;
   discovery?: {
     summary: string;
     assumptions: readonly string[];
@@ -94,7 +100,8 @@ export class PlanningWebError extends Error {
       | "forbidden"
       | "not_found"
       | "conflict"
-      | "invalid_request",
+      | "invalid_request"
+      | "unavailable",
     message: string,
   ) {
     super(message);
@@ -244,6 +251,7 @@ function viewFrom(
   checkpointRevision: number,
   checkpoint: DurableStandalonePlanningCheckpoint,
   actor: PlanningWebActor,
+  runtimeConfiguration: RuntimeConfigurationState,
 ): PlanningPageViewModel {
   const status = checkpoint.aggregate.snapshot.status;
   const currentSubject = gateSubject[status];
@@ -268,6 +276,7 @@ function viewFrom(
       : {}),
     documents: documentsFrom(checkpoint),
     approvals: Object.keys(checkpoint.aggregate.effectiveApprovals).length,
+    models: runtimeConfiguration.availability,
     ...(checkpoint.discovery
       ? {
           discovery: {
@@ -282,9 +291,11 @@ function viewFrom(
       : {}),
     timeline: timelineFrom(checkpoint),
     permissions: {
-      canApprove: editable && currentSubject !== undefined,
+      canApprove:
+        editable && runtimeConfiguration.readyForGeneration && currentSubject !== undefined,
       canRevise:
         editable &&
+        runtimeConfiguration.readyForGeneration &&
         (currentSubject !== undefined || status === "ready_for_development"),
       canCancel:
         editable && status === "awaiting_product_spec_approval",
@@ -310,13 +321,21 @@ export class PlanningWebController {
       clock: new SystemClock(),
       ids: { nextId: (scope) => `${scope}:${randomUUID()}` },
     },
+    private readonly runtimeConfiguration: RuntimeConfigurationState =
+      createDeterministicTestRuntimeConfigurationState(),
   ) {}
 
-  public static fileBacked(directory: string): PlanningWebController {
+  public static fileBacked(
+    directory: string,
+    runtimeConfiguration: RuntimeConfigurationState =
+      createDeterministicTestRuntimeConfigurationState(),
+  ): PlanningWebController {
     return new PlanningWebController(
       new FileTransactionalCheckpointStore<DurableStandalonePlanningCheckpoint>(
         directory,
       ),
+      undefined,
+      runtimeConfiguration,
     );
   }
 
@@ -330,7 +349,7 @@ export class PlanningWebController {
     if (!stored) {
       throw new PlanningWebError("not_found", "Planning run not found");
     }
-    return viewFrom(stored.revision, stored.value, actor);
+    return viewFrom(stored.revision, stored.value, actor, this.runtimeConfiguration);
   }
 
   public async start(
@@ -342,6 +361,7 @@ export class PlanningWebController {
     if (request.requestedBy !== actor.actorId) {
       throw new PlanningWebError("forbidden", "Actor identity does not match");
     }
+    this.assertGenerationReady();
     await runDurableStandalonePlanning(
       request,
       this.ports,
@@ -359,12 +379,18 @@ export class PlanningWebController {
   ): Promise<PlanningPageViewModel> {
     assertWorkspace(actor, workspaceId);
     assertEditor(actor);
+    this.assertGenerationReady();
     const stored = await this.store.load(checkpointKey(workspaceId, projectId));
     if (!stored) {
       throw new PlanningWebError("not_found", "Planning run not found");
     }
     if (stored.value.aggregate.processedCommands[binding.idempotencyKey]) {
-      return viewFrom(stored.revision, stored.value, actor);
+      return viewFrom(
+        stored.revision,
+        stored.value,
+        actor,
+        this.runtimeConfiguration,
+      );
     }
     const expectedSubject = gateSubject[stored.value.aggregate.snapshot.status];
     const document = documentsFrom(stored.value).find(
@@ -399,6 +425,7 @@ export class PlanningWebController {
   ): Promise<PlanningPageViewModel> {
     assertWorkspace(actor, workspaceId);
     assertEditor(actor);
+    this.assertGenerationReady();
     const stored = await this.store.load(checkpointKey(workspaceId, projectId));
     if (!stored) {
       throw new PlanningWebError("not_found", "Planning run not found");
@@ -443,7 +470,21 @@ export class PlanningWebController {
       this.ports,
       this.store,
     );
-    return viewFrom(outcome.checkpointRevision, outcome.checkpoint, actor);
+    return viewFrom(
+      outcome.checkpointRevision,
+      outcome.checkpoint,
+      actor,
+      this.runtimeConfiguration,
+    );
+  }
+
+  private assertGenerationReady(): void {
+    if (!this.runtimeConfiguration.readyForGeneration) {
+      throw new PlanningWebError(
+        "unavailable",
+        "服务尚未由开发者完成模型配置",
+      );
+    }
   }
 }
 

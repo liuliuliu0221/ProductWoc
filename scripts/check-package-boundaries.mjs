@@ -6,6 +6,7 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const packageRoot = join(root, "packages");
 
 const developmentPackages = [
+  "runtime-config",
   "development-contracts",
   "development-domain",
   "development-agent",
@@ -15,6 +16,13 @@ const developmentPackages = [
 ];
 
 const forbiddenWorkspaceDependencies = {
+  "runtime-config": [
+    "development-domain",
+    "development-agent",
+    "development-adapters",
+    "development-workflow",
+    "development-evals",
+  ],
   "development-contracts": developmentPackages.filter(
     (name) => name !== "development-contracts",
   ),
@@ -107,6 +115,6 @@ if (violations.length > 0) {
   process.exitCode = 1;
 } else {
   process.stdout.write(
-    "Package boundary check passed: P3 packages follow the standalone dependency direction.\n",
+    "Package boundary check passed: runtime and development packages follow the standalone dependency direction.\n",
   );
 }

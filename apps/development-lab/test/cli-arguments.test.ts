@@ -17,4 +17,19 @@ describe("Development CLI arguments", () => {
     });
     expect(parseDevelopmentCliArguments([])).toEqual({ command: "status", positional: [] });
   });
+
+  it("preserves nested operator configuration commands", () => {
+    expect(parseDevelopmentCliArguments([
+      "config",
+      "validate",
+      "examples/runtime-config.example.json",
+    ])).toEqual({
+      command: "config",
+      positional: ["validate", "examples/runtime-config.example.json"],
+    });
+    expect(parseDevelopmentCliArguments(["models", "test"])).toEqual({
+      command: "models",
+      positional: ["test"],
+    });
+  });
 });

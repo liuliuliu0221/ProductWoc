@@ -14,7 +14,9 @@
     "resume": "node dist/cli.js resume",
     "verify": "node dist/cli.js verify",
     "rollback": "node dist/cli.js rollback",
-    "models": "node dist/cli.js models",
+    "config:validate": "node dist/cli.js config validate",
+    "models": "node dist/cli.js models list",
+    "models:test": "node dist/cli.js models test",
     "export-evidence": "node dist/cli.js export-evidence",
     "web": "node dist/web-server.js"
   },
@@ -25,6 +27,7 @@
     "@product-woc/development-workflow": "workspace:*",
     "@product-woc/planning-adapters": "workspace:*",
     "@product-woc/planning-contracts": "workspace:*",
-    "@product-woc/planning-workflow": "workspace:*"
+    "@product-woc/planning-workflow": "workspace:*",
+    "@product-woc/runtime-config": "workspace:*"
   }
 }

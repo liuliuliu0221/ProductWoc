@@ -3,9 +3,13 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { NodeWorkspaceAdapter } from "@product-woc/development-adapters";
-import { modelStageScopeSchema } from "@product-woc/development-contracts";
 import { FileTransactionalCheckpointStore } from "@product-woc/planning-adapters";
 import type { DurableStandalonePlanningCheckpoint } from "@product-woc/planning-workflow";
+import {
+  createDeterministicTestRuntimeConfigurationState,
+  loadRuntimeConfiguration,
+  type RuntimeConfigurationState,
+} from "@product-woc/runtime-config";
 
 import {
   DevelopmentLabApplication,
@@ -64,14 +68,6 @@ function requiredRevision(body: JsonObject): number {
   return value as number;
 }
 
-function requiredNonNegativeInteger(body: JsonObject, name: string): number {
-  const value = body[name];
-  if (!Number.isInteger(value) || (value as number) < 0) {
-    throw new DevelopmentLabError("invalid_request", `${name} must be a non-negative integer`);
-  }
-  return value as number;
-}
-
 function requestKey(request: IncomingMessage): string {
   const value = request.headers["x-idempotency-key"];
   if (typeof value !== "string" || !value.trim()) {
@@ -94,8 +90,11 @@ export function createDevelopmentWebServer(options?: {
   modelPolicyDataDirectory?: string;
   actor?: DevelopmentLabActor;
   application?: DevelopmentLabApplication;
+  runtimeConfiguration?: RuntimeConfigurationState;
 }) {
   const actor = options?.actor ?? localActor;
+  const runtimeConfiguration = options?.runtimeConfiguration ??
+    createDeterministicTestRuntimeConfigurationState();
   const workspaceRoot = options?.workspaceRoot ?? process.env.PRODUCT_WOC_WORKSPACE_ROOT ?? process.cwd();
   const dataDirectory = options?.dataDirectory ??
     process.env.PRODUCT_WOC_DEVELOPMENT_DATA_DIR ??
@@ -110,6 +109,7 @@ export function createDevelopmentWebServer(options?: {
     dataDirectory,
     createLocalDevelopmentActions(workspaceRoot),
     modelPolicyDirectory,
+    runtimeConfiguration,
   );
   const streams = new Set<ServerResponse>();
   const broadcast = (view: unknown): void => {
@@ -136,6 +136,10 @@ export function createDevelopmentWebServer(options?: {
         request.on("close", () => streams.delete(response));
         return;
       }
+      if (request.method === "GET" && url.pathname === "/api/models") {
+        json(response, 200, runtimeConfiguration.availability);
+        return;
+      }
       if (request.method === "GET" && url.pathname === "/api/development") {
         const workspaceId = url.searchParams.get("workspaceId") ?? actor.workspaceId;
         const projectId = url.searchParams.get("projectId") ?? "demo-project";
@@ -144,9 +148,21 @@ export function createDevelopmentWebServer(options?: {
       }
       if (request.method === "POST" && url.pathname.startsWith("/api/development/")) {
         const action = url.pathname.slice("/api/development/".length);
+        if (action === "stage-model") {
+          json(response, 404, { error: "not_found" });
+          return;
+        }
         const body = await readJson(request);
         const projectId = requiredString(body, "projectId");
         if (action === "start") {
+          if (
+            !runtimeConfiguration.readyForGeneration
+          ) {
+            throw new DevelopmentLabError(
+              "unavailable",
+              "服务尚未由开发者完成模型配置",
+            );
+          }
           const started = await bootstrapAndStartDevelopmentFromPlanning({
             workspaceId: actor.workspaceId,
             projectId,
@@ -156,6 +172,12 @@ export function createDevelopmentWebServer(options?: {
             developmentDataDirectory: dataDirectory,
             requestId: requestKey(request),
             occurredAt: new Date().toISOString(),
+            ...(runtimeConfiguration.configurationHash
+              ? {
+                  modelPolicySnapshotId:
+                    `runtime:${runtimeConfiguration.configurationHash}`,
+                }
+              : {}),
           });
           const view = await application.get(actor.workspaceId, projectId, actor);
           broadcast(view);
@@ -229,24 +251,6 @@ export function createDevelopmentWebServer(options?: {
             actor,
             occurredAt,
           );
-        } else if (action === "stage-model") {
-          const parsedScope = modelStageScopeSchema.safeParse(requiredString(body, "scope"));
-          if (!parsedScope.success || !parsedScope.data.startsWith("development.")) {
-            throw new DevelopmentLabError("invalid_request", "A Development model scope is required");
-          }
-          view = await application.configureStageModel(
-            actor.workspaceId,
-            projectId,
-            {
-              ...binding,
-              modelPolicyRevision: requiredNonNegativeInteger(body, "modelPolicyRevision"),
-              scope: parsedScope.data,
-              profileId: requiredString(body, "profileId"),
-              impactAcknowledged: body.impactAcknowledged === true,
-            },
-            actor,
-            occurredAt,
-          );
         } else {
           json(response, 404, { error: "not_found" });
           return;
@@ -266,7 +270,19 @@ export function createDevelopmentWebServer(options?: {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PRODUCT_WOC_DEVELOPMENT_WEB_PORT ?? "4273");
-  const server = createDevelopmentWebServer();
+  const workspaceRoot = process.env.PRODUCT_WOC_WORKSPACE_ROOT ?? process.cwd();
+  const runtimeConfiguration = await loadRuntimeConfiguration({ cwd: workspaceRoot });
+  if (!runtimeConfiguration.valid) {
+    process.stderr.write(
+      `ProductWoc model configuration unavailable; run \`product-woc config validate\`:\n${runtimeConfiguration.diagnostics
+        .map(({ code, path }) => `- ${code}${path ? ` (${path})` : ""}`)
+        .join("\n")}\n`,
+    );
+  }
+  const server = createDevelopmentWebServer({
+    workspaceRoot,
+    runtimeConfiguration,
+  });
   server.listen(port, "127.0.0.1", () => {
     process.stdout.write(`ProductWoc Development Web: http://127.0.0.1:${port}\n`);
   });

@@ -2,10 +2,11 @@
 
 [GitHub repository](https://github.com/liuliuliu0221/ProductWoc) · MIT licensed
 
-ProductWoc is a standalone planning application and reusable planning kernel. It
-turns an idea into immutable Project Spec, Technical Design, Execution Plan, and
-DevelopmentStartEnvelope versions without requiring ProductFac, a database,
-Temporal, network access, or an external model provider.
+ProductWoc is a standalone planning application and reusable planning kernel. The
+current `v0.1.0` release proves the complete workflow with a deterministic test
+provider; it does not yet generate production-quality plans from a real model.
+Stage 4 adds developer-managed real-model configuration while keeping ProductWoc
+independent from ProductFac, databases and Temporal.
 
 The repository still contains a pinned ProductFac v1 compatibility fixture for a
 possible future integration. That compatibility data is not imported by the
@@ -27,10 +28,40 @@ pnpm web
 pnpm development:web
 pnpm product-woc -- develop
 pnpm product-woc -- status
+pnpm product-woc -- config validate
+pnpm product-woc -- models list
+pnpm product-woc -- models test
 pnpm eval:gate
 pnpm p3:gate
 pnpm p3:i:gate
+pnpm p4:a:gate
+pnpm p4:b:gate
 ```
+
+## Developer model configuration
+
+Browser users do not configure models. Before starting the normal Web services,
+the developer/operator copies the safe example and supplies referenced values in
+the process environment:
+
+```sh
+cp examples/runtime-config.example.json productwoc.config.json
+export PRODUCT_WOC_OLLAMA_ENDPOINT=http://127.0.0.1:11434
+export PRODUCT_WOC_PRODUCT_MODEL_ENDPOINT=https://provider.example.invalid/v1
+export PRODUCT_WOC_PRODUCT_MODEL_CREDENTIAL=replace-in-your-shell
+export PRODUCT_WOC_CODE_MODEL_ENDPOINT=https://provider.example.invalid/v1
+export PRODUCT_WOC_CODE_MODEL_CREDENTIAL=replace-in-your-shell
+pnpm product-woc -- config validate
+pnpm product-woc -- models list
+pnpm web
+```
+
+Alternatively, set `PRODUCT_WOC_CONFIG_PATH` to a configuration file outside the
+repository. The file contains only non-secret settings and `env:` references.
+`config validate` prints developer diagnostics and a reference-free frozen
+snapshot; ordinary Web APIs return only seven sanitized stage statuses.
+`models test` currently verifies configuration and environment resolution without
+making a network request. P4-02 adds Provider connection probes.
 
 `pnpm standalone` runs the complete local path:
 
@@ -60,17 +91,21 @@ persists under `.product-woc/checkpoints`, restores after refresh, and exposes
 document summaries, full Markdown, version history, structured Diff, revision,
 return, cancellation, and the final DevelopmentStartEnvelope. Its local identity
 is `local-user` in `local-workspace`; it does not provide production authentication.
+Until P4-03, Planning Web output remains deterministic test content.
 
 `pnpm development:web` starts the local Development UI at
 `http://127.0.0.1:4273`. A completed Planning page links to that address with the
 project ID; the Development service validates the current Envelope, creates or
 resumes the durable Run, and projects DAG, Patch, Evidence, logs, recovery
 blockers, model policy and controls from server View Models. Run Checkpoints live
-under `.product-woc/development-checkpoints`; project Model Profile overrides live
-under `.product-woc/model-policies` and contain credential references only.
+under `.product-woc/development-checkpoints`. Beginning with P4-00, the Web model
+view is sanitized and read-only; browser users cannot write Model Profiles or
+stage overrides. Both services now load the same operator configuration and fail
+closed for new generation when it is missing or invalid.
 
 `pnpm product-woc -- <command>` exposes `develop`, `status`, `resume`, `verify`,
-`rollback`, `models`, and `export-evidence`. Web and CLI use the same local
+`rollback`, `config validate`, `models list`, `models test`, and
+`export-evidence`. Web and CLI use the same local
 Checkpoint. Neither surface has a deploy, publish or production-write command.
 
 `pnpm eval:gate` runs the P2-07 deterministic Eval baseline and standalone Gate G2
@@ -87,6 +122,10 @@ Checkpoint, Outbox and process-recovery gate.
 Planning handoff, HTTP/SSE and accessibility gate.
 `pnpm p3:i:gate` runs the complete P3-08 Gate G3 corpus, adversarial security
 regression, strict MIT release-hygiene check, lint, typecheck, tests and builds.
+`pnpm p4:a:gate` validates the P4-00 runtime configuration contract, operator-only
+model authority, Web write prohibition, ProductFac isolation and affected tests.
+`pnpm p4:b:gate` validates P4-01 configuration discovery, environment resolution,
+Hashing, operator CLI diagnostics, sanitized Web availability and failure closure.
 
 The Stage 3 corpus lives under `fixtures/development-repositories`. Its fourteen
 small repositories cover the twelve required repository and risk categories.
@@ -95,8 +134,9 @@ deterministic model snapshot, permitted patch scope, forbidden behaviors,
 verification commands, expected Evidence and G3 scenario mapping. Required CI
 uses no model key, network model request or usage cost.
 
-See `CHANGELOG.md`, `docs/release-policy.md`, `docs/known-limitations.md`, and
-`examples/model-policy.example.json` before preparing a public release.
+See `CHANGELOG.md`, `docs/release-policy.md`, `docs/known-limitations.md`, the
+historical `examples/model-policy.example.json`, and the Stage 4 contract preview
+`examples/runtime-config.example.json` before preparing a public release.
 
 ## Isolation boundary
 
@@ -107,8 +147,10 @@ See `CHANGELOG.md`, `docs/release-policy.md`, `docs/known-limitations.md`, and
 - `pnpm isolation:check` rejects ProductFac package/path dependencies in runtime
   manifests and source imports.
 - In-memory adapters remain available for tests. Planning and Development durable
-  modes use integrity-checked atomic local Checkpoints; production databases or
-  real AI models can be added later only through the existing ports.
+  modes use integrity-checked atomic local Checkpoints. The current `v0.1.0`
+  Planning Web uses a deterministic test provider; Stage 4 adds developer-managed
+  real-model configuration through the existing ports without exposing model
+  settings or credentials to web users.
 - The durable local mode uses atomic JSON checkpoint replacement and an at-least-once
   Outbox. It remains a local development implementation, not a production database.
 
@@ -120,6 +162,7 @@ original stage 2 integration direction conflicts with them, ADR 008 and the stag
 - `stage-2-planning-workflow-phased-development-plan.md`
 - `stage-3-development-workflow-technical-architecture.md`
 - `stage-3-development-workflow-phased-development-plan.md`
+- `stage-4-real-planning-capability-development-plan.md`
 - `docs/adr/008-standalone-runtime-isolation.md`
 - `docs/adr/009-local-checkpoints-and-outbox.md`
 - `docs/adr/010-standalone-project-planning-web.md`
@@ -134,8 +177,11 @@ original stage 2 integration direction conflicts with them, ADR 008 and the stag
 - `docs/adr/019-development-web-cli-and-local-model-policy.md`
 - `docs/adr/020-deterministic-g3-corpus-and-release-gate.md`
 - `docs/adr/021-mit-license-and-release-governance.md`
+- `docs/adr/022-standalone-operator-managed-stage-model-configuration.md`
+- `docs/adr/023-versioned-runtime-configuration-loading-and-diagnostics.md`
 - `docs/p2-07-gate-g2-report.md`
 - `docs/p3-adr-index.md`
+- `docs/p4-adr-index.md`
 - `docs/p3-open-source-readiness.md`
 - `docs/p3-00-gate-p3-a-report.md`
 - `docs/p3-01-gate-p3-b-report.md`
@@ -146,4 +192,6 @@ original stage 2 integration direction conflicts with them, ADR 008 and the stag
 - `docs/p3-06-gate-p3-g-report.md`
 - `docs/p3-07-gate-p3-h-report.md`
 - `docs/p3-08-gate-g3-report.md`
+- `docs/p4-00-gate-p4-a-report.md`
+- `docs/p4-01-gate-p4-b-report.md`
 - `docs/github-publication-report.md`
